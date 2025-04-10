@@ -1,0 +1,208 @@
+%{
+#include <stdio.h>
+#include <string>
+
+#include "symbols.hpp"
+
+using namespace std;
+
+extern int lineNumber;
+
+int yylex();
+void yyerror(string msg);
+int getLineNumber();
+
+%}
+
+%union {
+    char* sval; // PONTEIRO QUE JOGA O TEXT COLETADO NO SCANNER PARA O PARSER
+}
+
+%token KW_BYTE
+%token KW_INT
+%token KW_REAL
+
+%token KW_IF
+%token KW_ELSE
+%token KW_DO
+%token KW_WHILE
+%token KW_READ
+%token KW_PRINT
+%token KW_RETURN
+
+%token OPERATOR_LE
+%token OPERATOR_GE
+%token OPERATOR_EQ
+%token OPERATOR_DIF
+
+%token <sval> TK_IDENTIFIER
+
+%token LIT_INT
+%token LIT_CHAR
+%token LIT_REAL
+%token LIT_STRING
+
+%token TOKEN_ERROR
+
+%nonassoc LOWER_THAN_ELSE
+%nonassoc KW_ELSE
+%left '+' '-' 
+%left '*' '/'
+%left '&' '|' '~'
+%left '(' ')'
+
+%nonassoc '<' '>' OPERATOR_LE OPERATOR_GE OPERATOR_EQ OPERATOR_DIF
+
+%%
+program: ldecl
+    ;
+
+ldecl: dec ldecl
+     |
+     ;
+
+dec: vardec
+   | vetdec
+   | fundec
+   ;
+
+// --------------------------------------------------------------------------------------------------------------------
+
+// DECLARAÇÃO DAS VARIÁVEIS
+
+vardec: KW_INT TK_IDENTIFIER '=' LIT_CHAR ';' { symbolInsert(SYMBOL_VAR_INT, $2); }
+      | KW_INT TK_IDENTIFIER '=' LIT_INT ';' { symbolInsert(SYMBOL_VAR_INT, $2); }
+      | KW_BYTE TK_IDENTIFIER '=' LIT_CHAR ';' { symbolInsert(SYMBOL_VAR_BYTE, $2); }
+      | KW_BYTE TK_IDENTIFIER '=' LIT_INT ';' { symbolInsert(SYMBOL_VAR_BYTE, $2); }
+      | KW_REAL TK_IDENTIFIER '=' LIT_REAL ';' { symbolInsert(SYMBOL_VAR_REAL, $2); }
+      ;
+
+// --------------------------------------------------------------------------------------------------------------------
+
+// DECLARAÇÃO DOS VETORES
+
+expr_vet_elem_list: expr_vet_elem
+                  | expr_vet_elem ',' expr_vet_elem_list
+                  ;
+expr_vet_elem: LIT_CHAR
+             | LIT_INT
+             ;
+expr_vet_real_list: LIT_REAL
+                  | LIT_REAL ',' expr_vet_real_list
+                  ;
+
+vetdec: KW_INT TK_IDENTIFIER '[' expr ']' '=' expr_vet_elem_list ';' { symbolInsert(SYMBOL_VEC_INT, $2); }
+      | KW_INT TK_IDENTIFIER '[' expr ']' ';'                        { symbolInsert(SYMBOL_VEC_INT, $2); }
+      | KW_BYTE TK_IDENTIFIER '[' expr ']' '=' expr_vet_elem_list ';'{ symbolInsert(SYMBOL_VEC_BYTE, $2); }
+      | KW_BYTE TK_IDENTIFIER '[' expr ']' ';'                       { symbolInsert(SYMBOL_VEC_BYTE, $2); }
+      | KW_REAL TK_IDENTIFIER '[' expr ']' '=' expr_vet_real_list ';'{ symbolInsert(SYMBOL_VEC_REAL, $2); }
+      | KW_REAL TK_IDENTIFIER '[' expr ']' ';'                       { symbolInsert(SYMBOL_VEC_REAL, $2); }
+      ;
+
+// --------------------------------------------------------------------------------------------------------------------
+
+// DECLARAÇÃO DAS FUNÇÕES
+
+parlist:
+        | parlist_nvazio
+        ;
+
+parlist_nvazio: par_elem
+        | par_elem ',' parlist_nvazio
+        ;
+
+par_elem: KW_INT TK_IDENTIFIER
+        | KW_BYTE TK_IDENTIFIER
+        | KW_REAL TK_IDENTIFIER
+        ;
+
+fundec: KW_INT TK_IDENTIFIER '('parlist')' cmd_blc  { symbolInsert(SYMBOL_FUNC_INT, $2); }
+      |KW_BYTE TK_IDENTIFIER '('parlist')' cmd_blc  { symbolInsert(SYMBOL_FUNC_BYTE, $2); }
+      |KW_REAL TK_IDENTIFIER '('parlist')' cmd_blc  { symbolInsert(SYMBOL_FUNC_REAL, $2); }
+      ;
+
+cmd_blc: '{'cmd_lst'}'
+       ;
+
+cmd_lst:
+       | cmd cmd_lst
+       ;
+// =============================================================================================
+
+// LISTA DE ELEMENTOS NO PRINT
+
+print_lst: print_elem 
+        |print_elem print_lst
+        ;
+
+print_elem: LIT_STRING
+        | expr
+        ;
+
+// =============================================================================================
+
+// COMANDOS
+
+cmd: TK_IDENTIFIER '=' expr ';'
+    |TK_IDENTIFIER'['expr']' '=' expr ';'
+    |KW_PRINT print_lst';'
+    |KW_RETURN expr';'
+    |KW_READ TK_IDENTIFIER';'
+    |KW_IF '('expr')' bloco_if %prec LOWER_THAN_ELSE
+    |KW_IF '('expr')' bloco_if KW_ELSE bloco_if
+    |KW_WHILE expr KW_DO bloco_if
+    |KW_DO bloco_if KW_WHILE expr ';'
+    |cmd_blc
+    | ';'
+
+// =============================================================================================
+
+bloco_if: cmd
+        | '{'cmd_lst'}'
+        
+
+par: par_nvazio
+    | 
+    ;
+
+par_nvazio: par_valor
+        | par_valor ',' par_nvazio
+        ;
+
+par_valor: TK_IDENTIFIER
+        | LIT_CHAR
+        | LIT_REAL
+        | LIT_INT
+        ;
+
+// EXPRESSÕES
+
+func: TK_IDENTIFIER'('par')'
+
+expr: func
+    | TK_IDENTIFIER'['expr']'
+    | TK_IDENTIFIER
+    | LIT_INT
+    | LIT_CHAR
+    | expr '+' expr
+    | expr '-' expr
+    | expr '*' expr
+    | expr '/' expr
+    | expr '&' expr
+    | expr '|' expr
+    | expr '<' expr
+    | expr '>' expr
+    | '~' expr
+    | expr OPERATOR_EQ expr
+    | expr OPERATOR_DIF expr
+    | expr OPERATOR_GE expr
+    | expr OPERATOR_LE expr
+    | '('expr')'
+
+%%
+
+void yyerror(string msg)
+{
+    fprintf(stderr, "ERRO DE SINTAXE. ERRO NA linha %d", lineNumber);
+    exit(3);
+}
