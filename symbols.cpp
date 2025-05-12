@@ -1,3 +1,5 @@
+// ALUNO: TOMÁS MITSUO DIAS UEDA - 00344595
+
 #include "symbols.hpp"
 #include <string>
 #include <map>
@@ -5,10 +7,8 @@
 map<string, SYMBOL*> SymbolTable;
 
 string SymbolName[] = {
-    "lIT_INT", "LIT_CHAR", "LIT_REAL", "LIT_STRING",
-    "VAR_INT", "VAR_CHAR", "VAR_REAL",
-    "VEC_INT", "VEC_CHAR", "VEC_REAL",
-    "FUNC_INT", "FUNC_CHAR", "FUNC_REAL"
+    "SYMBOL_LIT_INT", "SYMBOL_LIT_CHAR", "SYMBOL_LIT_REAL",
+     "SYMBOL_LIT_STRING", "SYMBOL_ID"
 };
 
 SYMBOL *symbolInsert(int type,char* text)

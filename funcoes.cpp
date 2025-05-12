@@ -1,3 +1,5 @@
+// ALUNO: TOMÁS MITSUO DIAS UEDA - 00344595
+
 #include <stdio.h>
 #include "funcoes.hpp"
 

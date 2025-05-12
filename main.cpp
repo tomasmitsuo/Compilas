@@ -1,9 +1,15 @@
+// ALUNO: TOMÁS MITSUO DIAS UEDA - 00344595
+
 # include <stdio.h>
 # include <stdlib.h>
+# include "ast.hpp"
+# include "symbols.hpp"
 
 extern FILE*yyin;
 extern int running;
 extern int lineNumber;
+
+char* outputFile = NULL;
 
 int yylex();
 int yyparse();
@@ -12,9 +18,11 @@ int isRunning();
 int getLineNumber();
 void symbolPrintTable();
 
+void astPrint(AST* ast, int level);
+
 int main(int argc, char** argv)
 {
-    if(argc < 2)
+    if(argc < 3)
     {
         fprintf(stderr, "Call filename\n");
         exit(1);
@@ -25,67 +33,7 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    // MAIN PARA TESTE DA ETAPA 1
-
-    // int tok;
-
-    // while(running)
-    // {
-    //     tok = yylex();
-    //     if(!running) break;
-
-    //     switch (tok) {
-    //         case KW_BYTE: {fprintf(stderr, "byte ");}
-    //         break;
-    //         case KW_INT: {fprintf(stderr, "int ");}
-    //         break;
-    //         case KW_REAL: {fprintf(stderr, "real ");}
-    //         break;
-    //         case KW_IF: {fprintf(stderr, "if ");}
-    //         break;
-    //         case KW_ELSE: {fprintf(stderr, "else ");}
-    //         break;
-    //         case KW_DO: {fprintf(stderr, "do ");}
-    //         break;
-    //         case KW_WHILE: {fprintf(stderr, "while ");}
-    //         break;
-    //         case KW_READ: {fprintf(stderr, "read ");}
-    //         break;
-    //         case KW_PRINT: {fprintf(stderr, "print ");}
-    //         break;
-    //         case KW_RETURN: {fprintf(stderr, "return ");}
-    //         break;
-    //         case OPERATOR_LE: {fprintf(stderr, "le ");}
-    //         break;
-    //         case OPERATOR_GE: {fprintf(stderr, "ge ");}
-    //         break;
-    //         case OPERATOR_EQ: {fprintf(stderr, "eq ");}
-    //         break;
-    //         case OPERATOR_DIF: {fprintf(stderr, "dif ");}
-    //         break;
-    //         case TK_IDENTIFIER: {fprintf(stderr, "id ");}
-    //         break;
-    //         case LIT_INT: {fprintf(stderr, "lit_int ");}
-    //         break;
-    //         case LIT_CHAR: {fprintf(stderr, "lit_char ");}
-    //         break;
-    //         case LIT_REAL: {fprintf(stderr, "lit_real ");}
-    //         break;
-    //         case LIT_STRING: {fprintf(stderr, "lit_string ");}
-    //         break;
-    //         case TOKEN_ERROR: {fprintf(stderr, "ERRO");}
-    //         break;
-
-    //         default:
-    //             {
-    //                 fprintf(stderr, "%c ", tok);
-    //             }    
-    //     }
-    // }
-    //while(running){
-     //   yyparse();
-    //}
-
+    outputFile = argv[2];
     yyparse();
 
     int linhas = getLineNumber();
@@ -93,4 +41,6 @@ int main(int argc, char** argv)
 
     printf("TABELA DE SÍMBOLOS:\n");
     symbolPrintTable();
+    printf("\n");
+
 }
