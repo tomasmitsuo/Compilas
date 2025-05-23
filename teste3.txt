@@ -1,9 +1,0 @@
-int y = 'c';
-byte z = 01;
-
-int teste(int a, byte b)
-{
-    buceta = x + 10 * (fun() - fun2());
-
-    return buceta;
-}

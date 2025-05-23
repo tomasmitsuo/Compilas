@@ -11,13 +11,12 @@
 
 #include "symbols.hpp"
 #include "ast.hpp"
+#include "semantic.hpp"
 
 using namespace std;
 
 extern int lineNumber;
 extern const char* outputFile;
-
-//extern AST* ast;
 
 int yylex();
 void yyerror(string msg);
@@ -89,14 +88,37 @@ int getLineNumber();
 %nonassoc '<' '>' OPERATOR_LE OPERATOR_GE OPERATOR_EQ OPERATOR_DIF
 
 %%
-program: ldecl          { $$ = $1; astPrint($$,0);
+program: ldecl          { $$ = $1; astPrint($$,0); printf("\n");
+                          
+                          // DECLARACOES
+                          checkAndSetDeclarations($$);
+                          checkUndeclared();
+                          
+                          //ATRIBUICOES E OPERACOES
+                          checkOperands($$);
+                          checkAssignments($$);
+                          
+                          // VARIAVEIS
+                          checkVariables($$);
+
+                          // VETORES
+                          checkVectors($$);
+                        
+                          // FUNÇÕES
+                          checkNumParFunc($$);
+                          checkTypeParFunc($$);
+                          checkReturn($$);
+
+
                           std::ofstream outFile(outputFile);
-                          if (!outFile.is_open()) {
+                          if (!outFile.is_open())
+                          {
                                 std::cerr << "Erro ao abrir o arquivo de saída.\n";
                                 return 1;
-                        }   
+                          }
                           descompile($$, outFile);
-                          outFile.close(); }
+                          outFile.close(); 
+                        }
     ;
 
 ldecl: dec ldecl        { vector<AST*> children = {$1,$2}; $$ = new AST(AST_LDECL, children); }
