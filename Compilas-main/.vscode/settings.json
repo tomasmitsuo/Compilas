@@ -1,0 +1,17 @@
+{
+    "files.associations": {
+        "string": "cpp",
+        "*.tcc": "cpp",
+        "clocale": "cpp",
+        "concepts": "cpp",
+        "cstddef": "cpp",
+        "cstdio": "cpp",
+        "cstdlib": "cpp",
+        "map": "cpp",
+        "initializer_list": "cpp",
+        "limits": "cpp",
+        "string_view": "cpp",
+        "tuple": "cpp",
+        "new": "cpp"
+    }
+}
