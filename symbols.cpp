@@ -9,7 +9,7 @@ map<string, SYMBOL*> SymbolTable;
 
 string SymbolName[] = {
     "SYMBOL_LIT_INT", "SYMBOL_LIT_CHAR", "SYMBOL_LIT_REAL", "SYMBOL_LIT_STRING",
-    "SYMBOL_ID",
+    "SYMBOL_ID", "SYMBOL_LABEL",
     "VAR",
     "VET",
     "FUNC", "FUNC_PAR"
@@ -57,4 +57,24 @@ int checkSymbolsUndeclared()
         } 
     }
     return undeclared;
+}
+
+
+
+SYMBOL* makeTemp(void)
+{
+    static int serialNumber = 0;
+    static char buffer[256] = "";
+    sprintf(buffer, "______Temp_____var_%d", serialNumber++);
+    return symbolInsert(SYMBOL_ID, buffer, SYMBOL_ID, false, 0, false, {});
+}
+
+
+
+SYMBOL* makeLabel(void)
+{
+    static int serialNumber = 0;
+    static char buffer[256] = "";
+    sprintf(buffer, "______Label_____var_%d", serialNumber++);
+    return symbolInsert(SYMBOL_ID, buffer, SYMBOL_LABEL, false, 0, false, {});
 }

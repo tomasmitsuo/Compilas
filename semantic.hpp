@@ -23,7 +23,6 @@ int getNumParFunc(AST *node);
 void fillParamTypes(AST *parList, std::vector<int> &types);
 bool checkExpressionsInt(AST *node);
 bool checkExpressionsReal(AST *node);
-bool checkExpressionsReturn(AST *node, int funcType);
 
 
 bool isReal(AST *node);
@@ -42,9 +41,13 @@ void checkVariables(AST *node);
 int invertString(string str);
 void checkVectors(AST *node);
 
+// FUNÇÕES PARA CHECAR RETURN
+int checkExpressionsType(AST *node);
+bool checkExpressionsReturn(AST *node, int funcType);
 void checkReturn(AST *node);
-void checkNumParFunc(AST *node);
 
+
+void checkNumParFunc(AST *node);
 bool isRealAux(AST *node);
 void checkTypeParFunc(AST *node);
 

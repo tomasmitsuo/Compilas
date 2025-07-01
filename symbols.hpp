@@ -10,7 +10,7 @@ using namespace std;
 
 enum SymbolType{
     SYMBOL_LIT_INT, SYMBOL_LIT_CHAR, SYMBOL_LIT_REAL, SYMBOL_LIT_STRING, // LITERAIS
-    SYMBOL_ID,
+    SYMBOL_ID, SYMBOL_LABEL,
     VAR,
     VET,
     FUNC, FUNC_PAR
@@ -45,5 +45,7 @@ struct SYMBOL
 SYMBOL* symbolInsert(int type,char* text, int datatype, bool isFunc, int num_par_func, bool isVec, std::vector<int> type_par_func);
 void symbolPrintTable();
 int checkSymbolsUndeclared();
+SYMBOL* makeTemp();
+SYMBOL* makeLabel();
 
 #endif // SYMBOL_HPP

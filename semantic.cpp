@@ -122,42 +122,38 @@ bool checkExpressionsReal(AST *node) // vai retornar um true ou false, true sign
 }
 
 
-
-bool checkExpressionsReturn(AST *node, int funType)
+int getExpressionType(AST *node)
 {
+    if (!node) return -1; // Tipo inválido
 
-    if(node->type == AST_RETURN)
+    if (node->symbol) 
     {
-        if(node->children[0]->symbol->datatype == funType)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return node->symbol->datatype;
     }
-    else
-    {
-        for (auto s : node->children)
-        {
-            if (!s)
-                continue; // ou return false, dependendo da semântica do AST
 
-            if (s->type == AST_RETURN) {
-                if (s->children[0]->symbol->datatype != funType) {
-                    return false;
-                }
-            } else {
-                // Recursivamente verifica se todos os nós internos também são INT
-                if (!checkExpressionsReturn(s,funType)) {
-                    return false;
-                }
-            }
+    switch (node->type) 
+    {
+        case AST_ADD:
+        case AST_SUB:
+        case AST_MUL:
+        case AST_DIV: 
+        {
+            int leftType = getExpressionType(node->children[0]);
+            int rightType = getExpressionType(node->children[1]);
+            if (leftType == REAL || rightType == REAL) return REAL;
+            if (leftType == INT || rightType == INT) return INT;
+            return BYTE;
         }
+
+    // outros cases...
+
+    default:
+        return -1;
     }
-    return true;
 }
+
+
+
 
 
 
@@ -837,6 +833,31 @@ void checkVectors(AST *node)
 
 
 
+bool checkExpressionsReturn(AST *node, int funType)
+{
+    if (!node) return true;
+
+    if (node->type == AST_RETURN)
+    {
+        if (!node->children.empty() && node->children[0])
+        {
+            int exprType = getExpressionType(node->children[0]);
+            return exprType == funType;
+        }
+        return false;
+    }
+
+    for (auto s : node->children)
+    {
+        if (!checkExpressionsReturn(s, funType))
+            return false;
+    }
+
+    return true;
+}
+
+
+
 void checkReturn(AST *node)
 {
     if (!node) return;
@@ -917,20 +938,21 @@ void checkNumParFunc(AST *node)
             fprintf(stderr, "Semantic ERROR: identificador %s não é uma função\n", node->symbol->text.c_str());
             SemanticErrors++;
         } 
-        else
-        {
-            AST *paramList = nullptr;
-            if (!node->children.empty())
-                paramList = node->children[0];
+        // else
+        // {
+        //     AST *paramList = nullptr;
+        //     if (!node->children.empty())
+        //         paramList = node->children[0];
 
-            int numArgs = getNumParFuncAux(paramList);
+        //     int numArgs = getNumParFuncAux(paramList);
 
-            if (node->symbol->num_par_func != numArgs)
-            {
-                fprintf(stderr, "Semantic ERROR: Quantidade de parametros em %s incompatível\n", node->symbol->text.c_str());
-                SemanticErrors++;
-            }   
-        }
+        //     if (node->symbol->num_par_func != numArgs)
+        //     {
+        //         fprintf(stderr, "Semantic ERROR: Quantidade de parametros em %s incompatível (esperado: %d, recebido: %d)\n",
+        // node->symbol->text.c_str(), node->symbol->num_par_func, numArgs);
+        //         SemanticErrors++;
+        //     }   
+        // }
     }
 
     if (node->type != AST_SYMBOL_FUNC)
