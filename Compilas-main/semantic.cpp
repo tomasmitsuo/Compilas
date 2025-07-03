@@ -246,7 +246,13 @@ void checkAndSetDeclarations(AST *node)
             node->symbol->type = VAR;
             node->symbol->datatype = REAL;
 
-            node->symbol->initialFloatValue = std::stof(node->children[0]->symbol->text); // GUARDANDO VALOR INICIAL NA TABELA DE SIMBOLOS
+            auto value = node->children[0]->symbol->text;
+            size_t slash_pos = value.find('/');
+                    float numerator = std::stof(value.substr(0, slash_pos));
+                    float denominator = std::stof(value.substr(slash_pos + 1));
+                    float float_value = numerator / denominator;
+
+            node->symbol->initialFloatValue = float_value; // GUARDANDO VALOR INICIAL NA TABELA DE SIMBOLOS
             
             break;
         }
@@ -612,6 +618,24 @@ void checkAndSetDeclarations(AST *node)
             node->symbol->datatype = INT;
             node->symbol->num_par_func = getNumParFunc(node->children[0]);
             node->symbol->isFunc = true;
+            
+            std::vector<std::string> paramNames;
+            AST* paramList = node->children[0]; // AST_PAR_LIST
+            while (paramList) 
+            {
+                // Primeiro filho sempre deve ser um nó do tipo PAR_..._SYMBOL
+                AST* paramNode = paramList->children[0];
+                if (paramNode && (paramNode->type == AST_PAR_INT_SYMBOL || paramNode->type == AST_PAR_BYTE_SYMBOL)) {
+                    paramNames.push_back(paramNode->symbol->text);
+                }
+                paramList = paramList->children[1];
+                if (paramList && (paramList->type == AST_PAR_INT_SYMBOL || paramList->type == AST_PAR_BYTE_SYMBOL)) {
+                    paramNames.push_back(paramList->symbol->text);
+                    break; // Último parâmetro
+                }
+            }
+            node->symbol->name_par_func = paramNames;
+            
 
             std::vector<int> types;
             fillParamTypes(node->children[0], types); // node->children[0] = AST_PAR_LIST
@@ -634,11 +658,29 @@ void checkAndSetDeclarations(AST *node)
             node->symbol->num_par_func = getNumParFunc(node);
             node->symbol->isFunc = true;
 
+            std::vector<std::string> paramNames;
+            AST* paramList = node->children[0]; // AST_PAR_LIST
+            while (paramList) 
+            {
+                // Primeiro filho sempre deve ser um nó do tipo PAR_..._SYMBOL
+                AST* paramNode = paramList->children[0];
+                if (paramNode && (paramNode->type == AST_PAR_INT_SYMBOL || paramNode->type == AST_PAR_BYTE_SYMBOL)) {
+                    paramNames.push_back(paramNode->symbol->text);
+                }
+                paramList = paramList->children[1];
+                if (paramList && (paramList->type == AST_PAR_INT_SYMBOL || paramList->type == AST_PAR_BYTE_SYMBOL)) {
+                    paramNames.push_back(paramList->symbol->text);
+                    break; // Último parâmetro
+                }
+            }
+            node->symbol->name_par_func = paramNames;
+
             std::vector<int> types;
             fillParamTypes(node->children[0], types); // node->children[0] = AST_PAR_LIST
             node->symbol->type_par_func = types;
             break;
         }
+
         case AST_REAL_FUNDEC: {
             if(node->symbol == nullptr)
             {
@@ -655,6 +697,23 @@ void checkAndSetDeclarations(AST *node)
             node->symbol->num_par_func = getNumParFunc(node);
             node->symbol->isFunc = true;
 
+            std::vector<std::string> paramNames;
+            AST* paramList = node->children[0]; // AST_PAR_LIST
+            while (paramList) 
+            {
+                // Primeiro filho sempre deve ser um nó do tipo PAR_..._SYMBOL
+                AST* paramNode = paramList->children[0];
+                if (paramNode && (paramNode->type == AST_PAR_REAL_SYMBOL)) {
+                    paramNames.push_back(paramNode->symbol->text);
+                }
+                paramList = paramList->children[1];
+                if (paramList && (paramList->type == AST_PAR_REAL_SYMBOL)) {
+                    paramNames.push_back(paramList->symbol->text);
+                    break; // Último parâmetro
+                }
+            }
+            node->symbol->name_par_func = paramNames;
+            
             std::vector<int> types;
             fillParamTypes(node->children[0], types); // node->children[0] = AST_PAR_LIST
             node->symbol->type_par_func = types;

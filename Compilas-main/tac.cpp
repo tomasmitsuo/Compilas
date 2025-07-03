@@ -553,7 +553,29 @@ std::string sanitize_literal(const std::string& text, const std::string& prefix)
 
 void resolvePrint(FILE* fout,SYMBOL* res, string varName, TAC* currentTac)
 {   
-    // CASO DAS FUNÇÕES
+    // CASO DE RETORNO DE FUNÇÕES
+    if (res->type == SYMBOL_ID && currentTac->prev && currentTac->prev->type == TAC_CALL && currentTac->prev->res == res) 
+    {    
+        // Resultado de chamada de função detectado
+        string funcName = currentTac->prev->op1->text;
+        
+        fprintf(fout, "# PRINT RETORNO DE FUNCAO %s\n", funcName.c_str());
+        
+        // O resultado já está no registrador eax (para inteiros) ou xmm0 (para floats)
+        if (currentTac->prev->op1->datatype == REAL) 
+        {
+            // Para float, convertemos para double e imprimimos
+            fprintf(fout, "\tcvtps2pd\t%%xmm0, %%xmm0\n");
+            fprintf(fout, "\tleaq\tprintfloatstr(%%rip), %%rdi\n");
+            fprintf(fout, "\tmovl\t$1, %%eax\n");
+        } else {
+            // Para inteiros (incluindo char), movemos de eax para esi
+            fprintf(fout, "\tmovl\t%%eax, %%esi\n");
+            fprintf(fout, "\tleaq\tprintintstr(%%rip), %%rdi\n");
+            fprintf(fout, "\tmovl\t$0, %%eax\n");
+        }
+        fprintf(fout, "\tcall\tprintf@PLT\n");
+    }
 
 
     // CASO DOS VETORES
@@ -700,6 +722,7 @@ void resolvePrint(FILE* fout,SYMBOL* res, string varName, TAC* currentTac)
 void generateAsm(TAC* first) 
 {
     std::vector<SYMBOL*> argStack;  // Stack temporário para TAC_ARG
+    //int insideAuxFunc = 0;
 
     FILE *fout;
     fout = fopen("out.s", "w");
@@ -741,12 +764,21 @@ void generateAsm(TAC* first)
                 string res = resolveSymbol(tac->res);
                 string left = resolveSymbol(tac->op1);
                 string right = resolveSymbol(tac->op2);
-
-                fprintf(fout, "# TAC_ADD\n");
-                fprintf(fout, "\tmovl\t_%s(%%rip), %%edx\n", left.c_str());  // RIP-relative
-                fprintf(fout, "\tmovl\t_%s(%%rip), %%eax\n", right.c_str()); // RIP-relative
-                fprintf(fout, "\taddl\t%%edx, %%eax\n");
-                fprintf(fout, "\tmovl\t%%eax, _%s(%%rip)\n", res.c_str());   // RIP-relative
+                
+                if(tac->op1->datatype == REAL && tac->op2->datatype == REAL)
+                {
+                    fprintf(fout, "\tmovss\t_%s(%%rip), %%xmm0\n", left.c_str());
+                    fprintf(fout, "\taddss\t_%s(%%rip), %%xmm0\n", right.c_str());
+                    fprintf(fout, "\tmovss\t%%xmm0, _%s(%%rip)\n", res.c_str());
+                }
+                else
+                {
+                    fprintf(fout, "# TAC_ADD\n");
+                    fprintf(fout, "\tmovl\t_%s(%%rip), %%edx\n", left.c_str());  // RIP-relative
+                    fprintf(fout, "\tmovl\t_%s(%%rip), %%eax\n", right.c_str()); // RIP-relative
+                    fprintf(fout, "\taddl\t%%edx, %%eax\n");
+                    fprintf(fout, "\tmovl\t%%eax, _%s(%%rip)\n", res.c_str());   // RIP-relative
+                }
                 break;
             }
             case TAC_SUB:
@@ -757,10 +789,20 @@ void generateAsm(TAC* first)
                 string right = resolveSymbol(tac->op2);
 
                 fprintf(fout, "# TAC_SUB\n");
-                fprintf(fout, "\tmovl\t_%s(%%rip),\t%%eax\n", left.c_str());   // eax = left
-                fprintf(fout, "\tsubl\t_%s(%%rip),\t%%eax\n", right.c_str());  // eax -= right
-                fprintf(fout, "\tmovl\t%%eax,\t_%s(%%rip)\n", res.c_str());    // res = eax
+
+                if(tac->op1->datatype == REAL && tac->op2->datatype == REAL)
+                {
+                    fprintf(fout, "\tmovss\t_%s(%%rip), %%xmm0\n", left.c_str());
+                    fprintf(fout, "\tsubss\t_%s(%%rip), %%xmm0\n", right.c_str());
+                    fprintf(fout, "\tmovss\t%%xmm0, _%s(%%rip)\n", res.c_str());
+                }
+                else
+                {
+                    fprintf(fout, "\tmovl\t_%s(%%rip),\t%%eax\n", left.c_str());   // eax = left
+                    fprintf(fout, "\tsubl\t_%s(%%rip),\t%%eax\n", right.c_str());  // eax -= right
+                    fprintf(fout, "\tmovl\t%%eax,\t_%s(%%rip)\n", res.c_str());    // res = eax
                 break;
+                }
             }
             case TAC_MUL:
             {
@@ -770,9 +812,18 @@ void generateAsm(TAC* first)
                 string right = resolveSymbol(tac->op2);
 
                 fprintf(fout, "# TAC_MUL\n");
-                fprintf(fout, "\tmovl\t_%s(%%rip),\t%%eax\n", left.c_str());   // eax = left
-                fprintf(fout, "\timull\t_%s(%%rip),\t%%eax\n", right.c_str()); // eax *= right
-                fprintf(fout, "\tmovl\t%%eax,\t_%s(%%rip)\n", res.c_str());    // res = eax
+                if(tac->op1->datatype == REAL && tac->op2->datatype == REAL)
+                {
+                    fprintf(fout, "\tmovss\t_%s(%%rip), %%xmm0\n", left.c_str());
+                    fprintf(fout, "\tmulss\t_%s(%%rip), %%xmm0\n", right.c_str());
+                    fprintf(fout, "\tmovss\t%%xmm0, _%s(%%rip)\n", res.c_str());
+                }
+                else
+                {
+                    fprintf(fout, "\tmovl\t_%s(%%rip),\t%%eax\n", left.c_str());   // eax = left
+                    fprintf(fout, "\timull\t_%s(%%rip),\t%%eax\n", right.c_str()); // eax *= right
+                    fprintf(fout, "\tmovl\t%%eax,\t_%s(%%rip)\n", res.c_str());    // res = eax
+                }
                 break;
             }
             case TAC_DIV:
@@ -783,10 +834,19 @@ void generateAsm(TAC* first)
                 string right = resolveSymbol(tac->op2);
 
                 fprintf(fout, "# TAC_DIV\n");
-                fprintf(fout, "\tmovl\t_%s(%%rip),\t%%eax\n", left.c_str());    // eax = left (dividendo)
-                fprintf(fout, "\tcltd\n");                               // estende sinal de eax para edx
-                fprintf(fout, "\tidivl\t_%s(%%rip)\n", right.c_str());          // eax = eax / right
-                fprintf(fout, "\tmovl\t%%eax,\t_%s(%%rip)\n", res.c_str());     // res = eax (quociente)
+                if(tac->op1->datatype == REAL && tac->op2->datatype == REAL)
+                {
+                    fprintf(fout, "\tmovss\t_%s(%%rip), %%xmm0\n", left.c_str());
+                    fprintf(fout, "\tdivss\t_%s(%%rip), %%xmm0\n", right.c_str());
+                    fprintf(fout, "\tmovss\t%%xmm0, _%s(%%rip)\n", res.c_str());
+                }
+                else
+                {
+                    fprintf(fout, "\tmovl\t_%s(%%rip),\t%%eax\n", left.c_str());    // eax = left (dividendo)
+                    fprintf(fout, "\tcltd\n");                               // estende sinal de eax para edx
+                    fprintf(fout, "\tidivl\t_%s(%%rip)\n", right.c_str());          // eax = eax / right
+                    fprintf(fout, "\tmovl\t%%eax,\t_%s(%%rip)\n", res.c_str());     // res = eax (quociente)
+                }
                 break;
             }
 
@@ -1062,13 +1122,35 @@ void generateAsm(TAC* first)
             /* Funções */
             case TAC_BEGINFUN:
             {
+
                 string funcName = tac->res ? tac->res->text : "";
+
+               // if(funcName != "main") insideAuxFunc =true;
+
                 fprintf(fout, "\t# BEGIN_FUN\n");
                 fprintf(fout, "\t.globl\t%s\n", funcName.c_str());
                 fprintf(fout, "\t.type\t%s, @function\n", funcName.c_str());
                 fprintf(fout, "%s:\n", funcName.c_str());
                 fprintf(fout, "\tpushq\t%%rbp\n");
                 fprintf(fout, "\tmovq\t%%rsp, %%rbp\n");
+                //TODO: CRIAR CASO PARA ADICIONAR OS ARGUMENTOS NOS PARAMETROS DA FUNCÃO
+                
+                if (tac->res && tac->res->isFunc && !tac->res->name_par_func.empty()) 
+                {
+                    const char* intRegs[] = {"%edi", "%esi", "%edx", "%ecx", "%r8d", "%r9d"};
+                    size_t numParams = tac->res->name_par_func.size();
+
+                    for (size_t i = 0; i < numParams && i < 6; ++i) {
+                        std::string paramName = tac->res->name_par_func[i];
+                        fprintf(fout, "\tmovl\t%s, _%s(%%rip)\n", intRegs[i], paramName.c_str());
+                    }
+
+                    if (numParams > 6) {
+                        fprintf(stderr, "AVISO: Mais de 6 parâmetros não suportado nos registradores\n");
+                        // Aqui você pode empilhar argumentos adicionais, se quiser
+                    }
+                }
+
                 break;
             }
 
@@ -1080,6 +1162,8 @@ void generateAsm(TAC* first)
 	                        "\tpopq	%%rbp\n"
 	                        "\tret\n"
                         );
+
+               // insideAuxFunc = false; // DESATIVA
                 break;
             }
 
@@ -1099,18 +1183,16 @@ void generateAsm(TAC* first)
                         fprintf(stderr, "Erro: Número de argumentos excede o suportado\n");
                         exit(1);
                     }
-
                     string argName = resolveSymbol(sym);
                     // Sempre passa como inteiro (adequado para seu caso)
                     fprintf(fout, "\tmovl\t_%s(%%rip), %s\n", argName.c_str(), intRegs[argCount]);
                     argCount++;
                 }
-
                 // Chama função
                 fprintf(fout, "\tcall\t%s\n", funcName.c_str());
-
                 // Armazena resultado se necessário
-                if (tac->res) {
+                if (tac->res) 
+                {
                     string retVar = resolveSymbol(tac->res);
                     fprintf(fout, "\tmovl\t%%eax, _%s(%%rip)\n", retVar.c_str());
                 }

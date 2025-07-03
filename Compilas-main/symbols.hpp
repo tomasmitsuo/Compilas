@@ -31,6 +31,7 @@ struct SYMBOL
     bool isVec;
     int vecIndex;
     std::vector<int> type_par_func;
+    std::vector<std::string> name_par_func; // NOVO: nomes dos parâmetros da função
 
     int initialIntValue;    // Para valores inteiros
     float initialFloatValue; // Para valores reais
@@ -41,7 +42,7 @@ struct SYMBOL
     
 
     public:
-    SYMBOL(int t, string s, int d, bool isFunc, int n, bool iv,int vi, std::vector<int> type_par_func):
+    SYMBOL(int t, string s, int d, bool isFunc, int n, bool iv,int vi, std::vector<int> type_par_func, std::vector<std::string> name_par_func):
     type(t),
     text(s),
     datatype(d),
@@ -50,13 +51,14 @@ struct SYMBOL
     isVec(iv),
     vecIndex(vi), 
     type_par_func(type_par_func),
+    name_par_func(name_par_func),
     initialIntValue(0),      // Inicializa com 0
     initialFloatValue(0.0f),  // Inicializa com 0.0
     initialCharValue("\0")
     {};
 };
 
-SYMBOL* symbolInsert(int type,char* text, int datatype, bool isFunc, int num_par_func, bool isVec,int vecIndex, std::vector<int> type_par_func);
+SYMBOL* symbolInsert(int type,char* text, int datatype, bool isFunc, int num_par_func, bool isVec,int vecIndex, std::vector<int> type_par_func, std::vector<string> name_par_func);
 void symbolPrintTable();
 int checkSymbolsUndeclared();
 SYMBOL* makeTemp();

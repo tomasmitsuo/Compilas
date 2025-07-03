@@ -26,14 +26,14 @@ string DataType[] = {
 
 
 
-SYMBOL *symbolInsert(int type,char* text, int datatype, bool isFunc, int num_par_func, bool isVec,int vecIndex, std::vector<int> type_par_func)
+SYMBOL *symbolInsert(int type,char* text, int datatype, bool isFunc, int num_par_func, bool isVec,int vecIndex, std::vector<int> type_par_func, std::vector<string> name_par_func)
 {
     if (SymbolTable.find(string(text)) != SymbolTable.end())
     {
         return SymbolTable.find(string(text))->second;
     }
 
-    SYMBOL *newSymbol = new SYMBOL(type, string(text), datatype, isFunc, num_par_func, isVec,vecIndex, type_par_func);
+    SYMBOL *newSymbol = new SYMBOL(type, string(text), datatype, isFunc, num_par_func, isVec,vecIndex, type_par_func, name_par_func);
     SymbolTable[string(text)] = newSymbol;
     return newSymbol;
 }
@@ -77,7 +77,7 @@ SYMBOL* makeTemp(void)
     static int serialNumber = 0;
     static char buffer[256] = "";
     sprintf(buffer, "______Temp_____var_%d", serialNumber++);
-    return symbolInsert(SYMBOL_ID, buffer, SYMBOL_ID, false, 0, false,0, {});
+    return symbolInsert(SYMBOL_ID, buffer, SYMBOL_ID, false, 0, false,0, {},{});
 }
 
 // COISA DA ETAPA 4
@@ -89,7 +89,7 @@ SYMBOL* makeLabel(void)
     static int serialNumber = 0;
     static char buffer[256] = "";
     sprintf(buffer, "______Label_____var_%d", serialNumber++);
-    return symbolInsert(SYMBOL_ID, buffer, SYMBOL_LABEL, false, 0, false,0, {});
+    return symbolInsert(SYMBOL_ID, buffer, SYMBOL_LABEL, false, 0, false,0, {},{});
 }
 
 
@@ -249,6 +249,11 @@ void printAsm(FILE *fout)
             {
                 fprintf(fout, ".globl _%s\n", entry.second->text.c_str());
                 fprintf(fout, "_%s:\t.float\t%f\n", entry.second->text.c_str(),entry.second->initialFloatValue);
+                /*size_t slash_pos = value.find('/');
+                    float numerator = std::stof(value.substr(0, slash_pos));
+                    float denominator = std::stof(value.substr(slash_pos + 1));
+                    float float_value = numerator / denominator;
+                    */
             }
 
             
