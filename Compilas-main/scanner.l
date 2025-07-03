@@ -38,13 +38,13 @@
 "==" {return OPERATOR_EQ;}
 "!=" {return OPERATOR_DIF;}
 
-[a-zA-Z_][_a-zA-Z0-9]* {yylval.symbol = symbolInsert(SYMBOL_ID,yytext,NONE,false,0,false, {}); return TK_IDENTIFIER;}
+[a-zA-Z_][_a-zA-Z0-9]* {yylval.symbol = symbolInsert(SYMBOL_ID,yytext,NONE,false,0,false,0, {}); return TK_IDENTIFIER;}
 
 
-[0-9]+ {yylval.symbol = symbolInsert(SYMBOL_LIT_INT,yytext, INT,false,0,false, {}); return LIT_INT;}
-'[^']' {yylval.symbol = symbolInsert(SYMBOL_LIT_CHAR,yytext, CHAR,false,0,false, {}); return LIT_CHAR;}
-[0-9]+\/[0-9]+ {yylval.symbol = symbolInsert(SYMBOL_LIT_REAL,yytext, REAL,false,0,false, {}); return LIT_REAL;}
-\"([^\"\n\\]|\\["\\n])*\"  {yylval.symbol = symbolInsert(SYMBOL_LIT_STRING,yytext, STRING,false,0,false, {}); return LIT_STRING;}
+[0-9]+ {yylval.symbol = symbolInsert(SYMBOL_LIT_INT,yytext, INT,false,0,false,0, {}); return LIT_INT;}
+'[^']' {yylval.symbol = symbolInsert(SYMBOL_LIT_CHAR,yytext, CHAR,false,0,false,0, {}); return LIT_CHAR;}
+[0-9]+\/[0-9]+ {yylval.symbol = symbolInsert(SYMBOL_LIT_REAL,yytext, REAL,false,0,false,0, {}); return LIT_REAL;}
+\"([^\"\n\\]|\\["\\n])*\"  {yylval.symbol = symbolInsert(SYMBOL_LIT_STRING,yytext, STRING,false,0,false,0, {}); return LIT_STRING;}
 
 
 [-.,:;+*/=(){}[\]%&<>|~] {return yytext[0];}

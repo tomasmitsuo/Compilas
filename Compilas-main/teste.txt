@@ -4,6 +4,10 @@ int y = 0;
 
 int vet[02];
 
+int char1 = 'a';
+int char2 = 'b';
+int char3 = 'c';
+
 int p = 1;
 int n = 2;
 real vtfd = 0;
@@ -60,11 +64,13 @@ int main()
       x = vet[1];
 
      x = vet[1] + vet[2]; // ISSO DAQUI DÁ ERRO, NÃO ERA PARA DAR ERRO
-
-     x = vet;  // ESTÃO DANDO ERRO (CORRETO!)
-     x = vet();
-     x = x[1];
-     x = x(y);
+     vet[5] = 123;
+     
+     // ESTÃO DANDO ERRO (CORRETO!)
+     //x = vet; 
+     //x = vet();
+     //x = x[1];
+     //x = x(y);
 
       vet[3] = 2;
     } while (x<01);

@@ -38,7 +38,12 @@ struct TAC
 
 void tacPrintSingle(TAC* tac);
 void tacPrintBackwards(TAC* tac);
+
+TAC* tacReverse(TAC* tac);
+
 TAC* tacJoin(TAC* l1, TAC* l2);
+
 TAC* generateCode(AST* node);
 
+void generateAsm(TAC* first);
 #endif

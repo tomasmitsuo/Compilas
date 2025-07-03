@@ -89,7 +89,9 @@ int getLineNumber();
 %nonassoc '<' '>' OPERATOR_LE OPERATOR_GE OPERATOR_EQ OPERATOR_DIF
 
 %%
-program: ldecl          { $$ = $1; astPrint($$,0); printf("\n");
+program: ldecl          { $$ = $1;
+                          TAC* code;
+                          astPrint($$,0); printf("\n");
                           
                           // DECLARACOES
                           checkAndSetDeclarations($$);
@@ -111,7 +113,11 @@ program: ldecl          { $$ = $1; astPrint($$,0); printf("\n");
                           checkReturn($$);
                           
                           // CONSTRUÇÃO E PRINT DAS TACS
-                          tacPrintBackwards(generateCode($$));
+                          code = generateCode($$);
+                          tacPrintBackwards(code);
+
+                          code = tacReverse(code);
+                          generateAsm(code);
 
 
                           std::ofstream outFile(outputFile);

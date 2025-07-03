@@ -2,6 +2,10 @@
 #include "symbols.hpp"
 #include "funcoes.hpp"
 
+#include <algorithm>
+#include <stdexcept>
+
+
 int SemanticErrors = 0;
 
 string ArithmeticsOperators[] = {
@@ -122,6 +126,7 @@ bool checkExpressionsReal(AST *node) // vai retornar um true ou false, true sign
 }
 
 
+
 int getExpressionType(AST *node)
 {
     if (!node) return -1; // Tipo inválido
@@ -154,9 +159,6 @@ int getExpressionType(AST *node)
 
 
 
-
-
-
 void checkAndSetDeclarations(AST *node)
 {
     if(!node)
@@ -168,6 +170,7 @@ void checkAndSetDeclarations(AST *node)
     {
 
         case AST_INT_VARDEC:
+        {
             if(node->symbol == nullptr)
             {
                 fprintf(stderr, "Semantic ERROR: Símbolo não declarado\n");
@@ -180,9 +183,25 @@ void checkAndSetDeclarations(AST *node)
             }
             node->symbol->type = VAR;
             node->symbol->datatype = INT;
+
+            std::string original = node->children[0]->symbol->text;
+            std::string reversed = original;
+            std::reverse(reversed.begin(), reversed.end());
+
+            try
+            {
+                node->symbol->initialIntValue = std::stoi(reversed); // GUARDANDO VALOR INICIAL NA TABELA DE SIMBOLOS
+            }
+            catch (const std::invalid_argument&) 
+            {
+                node->symbol->initialCharValue = node->children[0]->symbol->text;
+            }
             break;
 
+        }
+
         case AST_BYTE_VARDEC:
+        {
             if(node->symbol == nullptr)
             {
                 fprintf(stderr, "Semantic ERROR: Símbolo não declarado\n");
@@ -194,10 +213,26 @@ void checkAndSetDeclarations(AST *node)
                 SemanticErrors++;
             }
             node->symbol->type = VAR;
-            node->symbol->datatype = BYTE; 
-            break;
+            node->symbol->datatype = BYTE;
 
+
+            std::string original = node->children[0]->symbol->text;
+            std::string reversed = original;
+            std::reverse(reversed.begin(), reversed.end());
+
+            try
+            {
+                node->symbol->initialIntValue = std::stoi(reversed); // GUARDANDO VALOR INICIAL NA TABELA DE SIMBOLOS
+            }
+            catch (const std::invalid_argument&) 
+            {
+                node->symbol->initialCharValue = node->children[0]->symbol->text;
+            }
+
+            break;
+        }
         case AST_REAL_VARDEC:
+        {
             if(node->symbol == nullptr)
             {
                 fprintf(stderr, "Semantic ERROR: Símbolo não declarado\n");
@@ -210,10 +245,15 @@ void checkAndSetDeclarations(AST *node)
             }
             node->symbol->type = VAR;
             node->symbol->datatype = REAL;
+
+            node->symbol->initialFloatValue = std::stof(node->children[0]->symbol->text); // GUARDANDO VALOR INICIAL NA TABELA DE SIMBOLOS
             
             break;
+        }
+
 
         case AST_INT_VETDEC:
+        {
             if(node->symbol == nullptr)
             {
                 fprintf(stderr, "Semantic ERROR: Símbolo não declarado\n");
@@ -224,12 +264,89 @@ void checkAndSetDeclarations(AST *node)
                 fprintf(stderr,"Semantic ERROR: vetor %s já declarada\n", node->symbol->text.c_str());
                 SemanticErrors++;
             }
+
+            // ATRIBUIÇÃO DE NOVAS INFOS NA TABELA DE SIMBOLOS
             node->symbol->type = VET;
             node->symbol->datatype = INT;
             node->symbol->isVec = true;
+
+            // TAMANHO DO VETOR            
+            std::string original = node->children[0]->symbol->text;
+            std::string reversed = original;
+            std::reverse(reversed.begin(), reversed.end());
+            int index = std::stoi(reversed);
+            node->symbol->vecIndex = index;  
+
+            // VALORES DENTRO DO VETOR
+
+            // Primeiro filho é o tamanho do vetor
+            if(node->children.empty() || node->children[0]->symbol->type != SYMBOL_LIT_INT) {
+                fprintf(stderr, "Semantic ERROR: tamanho do vetor inválido\n");
+                SemanticErrors++;
+                break;
+            }
+
+            int size = std::stoi(node->children[0]->symbol->text);
+            node->symbol->vecIndex = size;
+            node->symbol->vecIntValues.resize(size, 0);
+
+            // Processa a lista de inicialização
+            AST* current = node->children[1]; // Pega o primeiro AST_EXPR_VET_ELEM
+            index = 0;
+
+            while(current != nullptr && index < size)
+            {
+                if(current->type == AST_EXPR_VET_ELEM)
+                {
+                    // Primeiro filho é o valor atual
+                    if(!current->children.empty() && current->children[0]->symbol != nullptr)
+                    {
+                        try {
+                            int value = std::stoi(current->children[0]->symbol->text);
+                            node->symbol->vecIntValues[index++] = value;
+                        } catch (...) {
+                            fprintf(stderr, "Semantic ERROR: valor de inicialização inválido\n");
+                            SemanticErrors++;
+                        }
+                    }
+
+                    // Segundo filho pode ser próximo EXPR_VET_ELEM ou o último valor direto
+                    if(current->children.size() > 1)
+                    {
+                        if(current->children[1]->type == AST_EXPR_VET_ELEM)
+                        {
+                            current = current->children[1];
+                        }
+                        else if(current->children[1]->type == AST_SYMBOL)
+                        {
+                            // Processa o último valor que está direto como AST_SYMBOL
+                            try {
+                                int value = std::stoi(current->children[1]->symbol->text);
+                                if(index < size) {
+                                    node->symbol->vecIntValues[index++] = value;
+                                }
+                            } catch (...) {
+                                fprintf(stderr, "Semantic ERROR: valor de inicialização inválido\n");
+                                SemanticErrors++;
+                            }
+                            current = nullptr; // Termina o loop
+                        }
+                    }
+                    else
+                    {
+                        current = nullptr;
+                    }
+                }
+                else
+                {
+                    current = nullptr;
+                }
+            }
             break;
+        }
 
         case AST_BYTE_VETDEC:
+        {
             if(node->symbol == nullptr)
             {
                 fprintf(stderr, "Semantic ERROR: Símbolo não declarado\n");
@@ -243,9 +360,83 @@ void checkAndSetDeclarations(AST *node)
             node->symbol->type = VET;
             node->symbol->datatype = BYTE;
             node->symbol->isVec = true;
+            
+            std::string original = node->children[0]->symbol->text;
+            std::string reversed = original;
+            std::reverse(reversed.begin(), reversed.end());
+            int index = std::stoi(reversed);
+            node->symbol->vecIndex = index;
+
+            // VALORES DENTRO DO VETOR
+
+            // Primeiro filho é o tamanho do vetor
+            if(node->children.empty() || node->children[0]->symbol->type != SYMBOL_LIT_INT) {
+                fprintf(stderr, "Semantic ERROR: tamanho do vetor inválido\n");
+                SemanticErrors++;
+                break;
+            }
+
+            int size = std::stoi(node->children[0]->symbol->text);
+            node->symbol->vecIndex = size;
+            node->symbol->vecIntValues.resize(size, 0);
+
+            // Processa a lista de inicialização
+            AST* current = node->children[1]; // Pega o primeiro AST_EXPR_VET_ELEM
+            index = 0;
+
+            while(current != nullptr && index < size)
+            {
+                if(current->type == AST_EXPR_VET_ELEM)
+                {
+                    // Primeiro filho é o valor atual
+                    if(!current->children.empty() && current->children[0]->symbol != nullptr)
+                    {
+                        try {
+                            int value = std::stoi(current->children[0]->symbol->text);
+                            node->symbol->vecIntValues[index++] = value;
+                        } catch (...) {
+                            fprintf(stderr, "Semantic ERROR: valor de inicialização inválido\n");
+                            SemanticErrors++;
+                        }
+                    }
+
+                    // Segundo filho pode ser próximo EXPR_VET_ELEM ou o último valor direto
+                    if(current->children.size() > 1)
+                    {
+                        if(current->children[1]->type == AST_EXPR_VET_ELEM)
+                        {
+                            current = current->children[1];
+                        }
+                        else if(current->children[1]->type == AST_SYMBOL)
+                        {
+                            // Processa o último valor que está direto como AST_SYMBOL
+                            try {
+                                int value = std::stoi(current->children[1]->symbol->text);
+                                if(index < size) {
+                                    node->symbol->vecIntValues[index++] = value;
+                                }
+                            } catch (...) {
+                                fprintf(stderr, "Semantic ERROR: valor de inicialização inválido\n");
+                                SemanticErrors++;
+                            }
+                            current = nullptr; // Termina o loop
+                        }
+                    }
+                    else
+                    {
+                        current = nullptr;
+                    }
+                }
+                else
+                {
+                    current = nullptr;
+                }
+            }
             break;
+        }
 
         case AST_REAL_VETDEC:
+        {
             if(node->symbol == nullptr)
             {
                 fprintf(stderr, "Semantic ERROR: Símbolo não declarado\n");
@@ -259,9 +450,83 @@ void checkAndSetDeclarations(AST *node)
             node->symbol->type = VET;
             node->symbol->datatype = REAL;
             node->symbol->isVec = true;
+            
+            std::string original = node->children[0]->symbol->text;
+            std::string reversed = original;
+            std::reverse(reversed.begin(), reversed.end());
+            int index = std::stoi(reversed);
+            node->symbol->vecIndex = index;
+            // VALORES DENTRO DO VETOR
+
+            // Primeiro filho é o tamanho do vetor
+            if(node->children.empty() || node->children[0]->symbol->type != SYMBOL_LIT_INT) {
+                fprintf(stderr, "Semantic ERROR: tamanho do vetor inválido/tipo do vetor inválido\n");
+                SemanticErrors++;
+                break;
+            }
+
+            int size = std::stoi(node->children[0]->symbol->text);
+            node->symbol->vecIndex = size;
+            node->symbol->vecFloatValues.resize(size, 0);
+
+            // Processa a lista de inicialização
+            AST* current = node->children[1]; // Pega o primeiro AST_EXPR_VET_ELEM
+            index = 0;
+
+            while(current != nullptr && index < size)
+            {
+                if(current->type == AST_EXPR_VET_ELEM)
+                {
+                    // Primeiro filho é o valor atual
+                    if(!current->children.empty() && current->children[0]->symbol != nullptr)
+                    {
+                        try {
+                            int value = std::stof(current->children[0]->symbol->text);
+                            node->symbol->vecFloatValues[index++] = value;
+                        } catch (...) {
+                            fprintf(stderr, "Semantic ERROR: valor de inicialização inválido\n");
+                            SemanticErrors++;
+                        }
+                    }
+
+                    // Segundo filho pode ser próximo EXPR_VET_ELEM ou o último valor direto
+                    if(current->children.size() > 1)
+                    {
+                        if(current->children[1]->type == AST_EXPR_VET_ELEM)
+                        {
+                            current = current->children[1];
+                        }
+                        else if(current->children[1]->type == AST_SYMBOL)
+                        {
+                            // Processa o último valor que está direto como AST_SYMBOL
+                            try {
+                                int value = std::stof(current->children[1]->symbol->text);
+                                if(index < size) {
+                                    node->symbol->vecFloatValues[index++] = value;
+                                }
+                            } catch (...) {
+                                fprintf(stderr, "Semantic ERROR: valor de inicialização inválido\n");
+                                SemanticErrors++;
+                            }
+                            current = nullptr; // Termina o loop
+                        }
+                    }
+                    else
+                    {
+                        current = nullptr;
+                    }
+                }
+                else
+                {
+                    current = nullptr;
+                }
+            }
             break;
-        
+        }
+
+
         case AST_INT_VETDEC_VAZIO:
+        {
             if(node->symbol == nullptr)
             {
                 fprintf(stderr, "Semantic ERROR: Símbolo não declarado\n");
@@ -275,9 +540,17 @@ void checkAndSetDeclarations(AST *node)
             node->symbol->type = VET;
             node->symbol->datatype = INT;
             node->symbol->isVec = true;
+            
+            std::string original = node->children[0]->symbol->text;
+            std::string reversed = original;
+            std::reverse(reversed.begin(), reversed.end());
+            int index = std::stoi(reversed);
+            node->symbol->vecIndex = index;
             break;
-        
+        }
+
         case AST_BYTE_VETDEC_VAZIO:
+        {
             if(node->symbol == nullptr)
             {
                 fprintf(stderr, "Semantic ERROR: Símbolo não declarado\n");
@@ -291,9 +564,17 @@ void checkAndSetDeclarations(AST *node)
             node->symbol->type = VET;
             node->symbol->datatype = BYTE;
             node->symbol->isVec = true;
+            
+            std::string original = node->children[0]->symbol->text;
+            std::string reversed = original;
+            std::reverse(reversed.begin(), reversed.end());
+            int index = std::stoi(reversed);
+            node->symbol->vecIndex = index;
             break;
+        }
 
         case AST_REAL_VETDEC_VAZIO:
+        {
             if(node->symbol == nullptr)
             {
                 fprintf(stderr, "Semantic ERROR: Símbolo não declarado\n");
@@ -307,7 +588,14 @@ void checkAndSetDeclarations(AST *node)
             node->symbol->type = VET;
             node->symbol->datatype = REAL;
             node->symbol->isVec = true;
+            
+            std::string original = node->children[0]->symbol->text;
+            std::string reversed = original;
+            std::reverse(reversed.begin(), reversed.end());
+            int index = std::stoi(reversed);
+            node->symbol->vecIndex = index;
             break;
+        }
 
         case AST_INT_FUNDEC: {
             if(node->symbol == nullptr)

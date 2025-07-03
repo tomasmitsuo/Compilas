@@ -1,4 +1,6 @@
 #include <vector>
+#include <algorithm>
+#include "symbols.hpp"
 #include "tac.hpp"
 #include "ast.hpp"
 
@@ -16,13 +18,21 @@ string TACTypenames[] = {
     "TAC_VET_STORE",
     "TAC_VET_LOAD",
     
-
-
     "TAC_JFALSE", "TAC_LABEL", "TAC_JUMP",
     "TAC_BEGINFUN", "TAC_ENDFUN", "TAC_CALL", "TAC_ARG",
     "TAC_RET","TAC_PRINT","TAC_READ" 
 };
 
+// FUNÇÃO DE REVERSÃO DA TAC
+
+TAC* tacReverse(TAC* tac) {
+    TAC* t = tac;
+    for (t = tac; t->prev; t = t->prev)
+        t->prev->next = t;
+    return t;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // FUNÇÕES DE PRINT DA TAC
 
@@ -58,6 +68,7 @@ void tacPrintBackwards(TAC* tac)
 // ============================================================================================================================
 
 // FUNÇÕES AUXILIARES DE CONSTRUÇÃO DAS TACS
+
 TAC* makeFunc(AST* node, TAC* code1)
 {
     // Cria TAC de início da função
@@ -109,6 +120,8 @@ TAC* makeBinOp(int tacType, TAC* code0, TAC* code1)
     TAC* op = new TAC(tacType, temp, code0->res, code1->res);
     return tacJoin(tacJoin(code0, code1), op);
 }
+
+
 
 TAC* makeIfThen(TAC* code0, TAC* code1)
 {
@@ -227,6 +240,7 @@ TAC* makePrint(TAC* codeExpr)
 }
 
 
+
 TAC* makePrintList(TAC* codeExpr, TAC* nextPrintList) {
     TAC* printTac = new TAC(TAC_PRINT, codeExpr->res, nullptr, nullptr);    
     return tacJoin(codeExpr, tacJoin(printTac, nextPrintList));
@@ -243,6 +257,8 @@ TAC* makeRead(SYMBOL* target)
     }
     return new TAC(TAC_READ, target, nullptr, nullptr);
 }
+
+
 
 TAC* makeReturn(TAC* codeExpr)
 {
@@ -317,18 +333,19 @@ TAC* generateCode(AST* node)
             result = makeVetAccess(node->symbol, code[0]);  // code[0] contém o índice
             break;
         
-
-
         // OPERAÇÕES ARITMÉTICAS
         case AST_ADD:
             result = makeBinOp(TAC_ADD, code[0], code[1]);
             break;
+
         case AST_SUB:
             result = makeBinOp(TAC_SUB, code[0], code[1]);
             break;
+
         case AST_MUL:
             result = makeBinOp(TAC_MUL, code[0], code[1]);
             break;
+
         case AST_DIV:
             result = makeBinOp(TAC_DIV, code[0], code[1]);
             break;
@@ -337,9 +354,11 @@ TAC* generateCode(AST* node)
         case AST_AND:
             result = makeBinOp(TAC_AND, code[0], code[1]);
             break;
+
         case AST_OR:
             result = makeBinOp(TAC_OR, code[0], code[1]);
             break;
+
         case AST_NOT:
             if (!code[0]) {
                 fprintf(stderr, "Erro: operando ausente em operação NOT\n");
@@ -360,18 +379,21 @@ TAC* generateCode(AST* node)
         case AST_GRT:
             result = makeBinOp(TAC_GRT, code[0], code[1]);
             break;
+
         case AST_GE:
             result = makeBinOp(TAC_GE, code[0], code[1]);
             break;
+
         case AST_LE:
             result = makeBinOp(TAC_LE, code[0], code[1]);
             break;
+
         case AST_LESS:
             result = makeBinOp(TAC_LESS, code[0], code[1]);
             break;
 
         case AST_ASSIGNMENT:
-            result = tacJoin(code[0], new TAC(TAC_COPY, node->symbol, code[0]?code[0]->res:0, nullptr)); // TODO: QUANDO É VETOR TEM QUE GUARDAR O INDICE
+            result = tacJoin(code[0], new TAC(TAC_COPY, node->symbol, code[0]?code[0]->res:0, nullptr)); 
             break;
         
         case AST_VET_ASSIGNMENT:
@@ -384,7 +406,7 @@ TAC* generateCode(AST* node)
             TAC* argsCode = code[0]; // code[0] já contém o código dos argumentos processados
             result = makeCall(node->symbol, argsCode);
         }
-        break;
+            break;
 
         case AST_EXP_LIST: // LISTA DE EXPRESSÕES (argumentos)
         {
@@ -400,8 +422,7 @@ TAC* generateCode(AST* node)
                 result = nextListCode;
             }
         }
-        break;
-
+            break;
 
         case AST_IF_THEN:
             result = makeIfThen(code[0], code[1]);
@@ -419,29 +440,20 @@ TAC* generateCode(AST* node)
             result = makeDoWhile(code[0], code[1]);
             break;
 
-      //  case AST_PRINT:
-     //       result = makePrint(code[0]);
-     //       break;
-
         case AST_PRINT_LIST: 
         {
-            // code[0] = TAC do argumento atual (ex: 'a')
-            // code[1] = TAC do resto da lista (ex: 'b, c')
             TAC* currentArg = code[0]; 
-            TAC* remainingArgs = code[1]; // Já contém as TACs dos próximos prints
+            TAC* remainingArgs = code[1];
             
-            // Se há mais argumentos, processa recursivamente
             if (remainingArgs) {
-                result = makePrintList(currentArg, remainingArgs);
+                result = makePrintList(currentArg, remainingArgs); // Se há mais argumentos, processa recursivamente
             } 
-            // Caso base: último argumento
             else {
-                result = makePrint(currentArg);
+                result = makePrint(currentArg); // Caso base: último argumento
             }
             break;
         }
 
-        
         case AST_READ:
             result = makeRead(node->symbol);
             break;
@@ -462,4 +474,718 @@ TAC* generateCode(AST* node)
     }
 
     return result;
+}
+
+// =====================================================================================
+
+// GERAÇÃO DE CÓDIGO ASM
+
+
+string resolveSymbol(SYMBOL* symbol) // FUNÇÃO QUE TRATA OS SIMBOLOS, FORMATANDO
+{
+
+    switch(symbol->type)
+    {
+        case SYMBOL_LIT_STRING:
+        case SYMBOL_LIT_CHAR:
+            if (symbol->text.at(0) == '_')
+                return symbol->text;    
+            return "_" + symbol->text.substr(1, symbol->text.size()-2);
+            break;
+
+        case SYMBOL_LIT_REAL:
+        {
+            // SUBSTITUI O "/" por "barra"
+            std::string label_name = symbol->text;
+            std::replace(label_name.begin(), label_name.end(), '/', ' '); // Troca '/' por espaço temporariamente
+            size_t pos;
+            while ((pos = label_name.find(' ')) != std::string::npos)
+                label_name.replace(pos, 1, "barra");
+
+            if (label_name.at(0) == '_')
+            {
+                return label_name;
+            }
+            return "_" + label_name;
+            break;
+        }
+
+        case SYMBOL_LIT_INT:
+        {        
+            if (symbol->text.at(0) == '_')
+            {
+                return symbol->text;
+            }
+            return "_" + symbol->text;
+            break;
+        }
+        default:
+            return symbol->text;
+    }   
+}
+
+
+std::string sanitize_literal(const std::string& text, const std::string& prefix)
+{
+    std::string result = prefix;
+
+    for (char c : text) {
+        if (isalnum(c)) {
+            result += c;
+        } else if (c == '\n') {
+            result += "nl";  // newline
+        } else if (c == ' ') {
+            result += "_";
+        } else if (c == '\'') {
+            // skip quotes in char
+        } else if (c == '"') {
+            // skip quotes in string
+        } else {
+            result += "_";  // fallback for special characters
+        }
+    }
+    return result;
+}
+
+
+
+// TODO: ADICIONAR PRINTS DE FUNÇÃO
+
+void resolvePrint(FILE* fout,SYMBOL* res, string varName, TAC* currentTac)
+{   
+    // CASO DAS FUNÇÕES
+
+
+    // CASO DOS VETORES
+    if (res->type == SYMBOL_ID && currentTac->prev && currentTac->prev->type == TAC_VET_LOAD && currentTac->prev->res == res) 
+    {    
+        // Acesso a vetor detectado!
+        string vetName = currentTac->prev->op1->text;
+        SYMBOL* indexSym = currentTac->prev->op2;
+        string indexName = resolveSymbol(indexSym);
+
+        fprintf(fout, "# PRINT VETOR %s[%s]\n", vetName.c_str(), indexName.c_str());
+        
+        // Gera código de acesso
+        if (indexSym->type == SYMBOL_LIT_INT) {
+            int offset;
+            if (!indexName.empty() && indexName[0] == '_')
+            {
+                offset = atoi(indexName.substr(1).c_str()) * 4; // Pega do segundo caractere em diante
+            } 
+            else
+            {
+                offset = atoi(indexName.c_str()) * 4;
+            }
+            fprintf(fout, "\tmovl\t_%s+%d(%%rip), %%esi\n", vetName.c_str(), offset);
+        } else {
+            fprintf(fout, "\tmovl\t_%s(%%rip), %%eax\n", indexName.c_str());
+            fprintf(fout, "\tleaq\t_%s(%%rip), %%rdi\n", vetName.c_str());
+            fprintf(fout, "\tmovl\t(%%rdi,%%rax,4), %%esi\n");
+        }
+        
+        // Gera código de print
+        fprintf(fout, "\tleaq\tprintintstr(%%rip), %%rdi\n");
+        fprintf(fout, "\tmovl\t$0, %%eax\n");
+        fprintf(fout, "\tcall\tprintf@PLT\n");
+    }
+    
+    // DEMAIS CASOS
+    else 
+    {
+        switch (res->type) 
+        {  
+            case VAR:
+            {
+                if(res->datatype == REAL)
+                {
+                    fprintf(fout,
+                        "\tmovss\t_%s(%%rip), %%xmm0\n"
+                        "\tcvtps2pd\t%%xmm0, %%xmm0\n"
+                        "\tleaq\tprintfloatstr(%%rip), %%rax\n"
+                        "\tmovq\t%%rax, %%rdi\n"
+                        "\tmovl\t$1, %%eax\n"
+                        "\tcall\tprintf@PLT\n"
+                        "\tmovl\t$1, %%eax;\n",
+                        varName.c_str()
+                    );
+                }
+                else // TRATA CHAR COMO SE FOSSE INT
+                {
+                    fprintf(fout,
+                        "\tmovl\t_%s(%%rip), %%esi\n"
+                        "\tleaq\tprintintstr(%%rip), %%rax\n"
+                        "\tmovq\t%%rax, %%rdi\n"
+                        "\tmovl\t$0, %%eax\n"
+                        "\tcall\tprintf@PLT\n"
+                        "\tmovl\t$0, %%eax;\n",
+                        varName.c_str()
+                    );
+                }
+
+                break;
+            }
+            case SYMBOL_LIT_INT:
+            {
+                fprintf(fout,
+                    "\tmovl\t__%s(%%rip), %%esi\n"
+                    "\tleaq\tprintintstr(%%rip), %%rax\n"
+                    "\tmovq\t%%rax, %%rdi\n"
+                    "\tmovl\t$0, %%eax\n"
+                    "\tcall\tprintf@PLT\n"
+                    "\tmovl\t$0, %%eax;\n",
+                    varName.c_str()
+                );
+                break;
+            }
+            case SYMBOL_LIT_REAL:
+            {
+                // float
+
+                std::string varName = res->text;
+                std::replace(varName.begin(), varName.end(), '/', ' '); // Troca '/' por espaço temporariamente
+                size_t pos;
+                while ((pos = varName.find(' ')) != std::string::npos)
+                    varName.replace(pos, 1, "barra");
+
+
+                fprintf(fout,
+                    "\tmovss\t__%s(%%rip), %%xmm0\n"
+                    "\tcvtps2pd\t%%xmm0, %%xmm0\n"
+                    "\tleaq\tprintfloatstr(%%rip), %%rax\n"
+                    "\tmovq\t%%rax, %%rdi\n"
+                    "\tmovl\t$1, %%eax\n"  // float em xmm0
+                    "\tcall\tprintf@PLT\n",
+                    varName.c_str()
+                );
+                break;
+            }
+            case SYMBOL_LIT_CHAR:
+            {
+                // char (imprime como caractere)
+
+                varName = sanitize_literal(res->text, "char_");
+                fprintf(fout,
+                    "\tmovl\t__%s(%%rip), %%esi\n"
+                    "\tleaq\tprintcharstr(%%rip), %%rax\n"
+                    "\tmovq\t%%rax, %%rdi\n"
+                    "\tmovl\t$0, %%eax\n"
+                    "\tcall\tprintf@PLT\n",
+                    varName.c_str()
+                );
+                break;
+            }
+            case SYMBOL_LIT_STRING:
+            {
+                // string (ponteiro)
+                varName = sanitize_literal(res->text, "char_");
+                fprintf(fout,
+                    "\tleaq\t__%s(%%rip), %%rsi\n"
+                    "\tleaq\tprintstringstr(%%rip), %%rax\n"
+                    "\tmovq\t%%rax, %%rdi\n"
+                    "\tmovl\t$0, %%eax\n"
+                    "\tcall\tprintf@PLT\n",
+                    varName.c_str()
+                );
+                break;
+            }
+            default:
+                fprintf(stderr, "Erro: tipo desconhecido para print.\n");
+                break;
+        }
+    }      
+}
+
+// CRIAÇÃO DO CÓDIGO (ASSEMBLY)
+void generateAsm(TAC* first) 
+{
+    std::vector<SYMBOL*> argStack;  // Stack temporário para TAC_ARG
+
+    FILE *fout;
+    fout = fopen("out.s", "w");
+
+    // INIT
+    fprintf(fout, "# FIXED INIT\n"
+                  ".text\n"
+                  ".section .rodata\n"
+                  "printintstr: .string \"%%d\\n\"\n"
+                  "printfloatstr: .string \"%%f\\n\"\n"
+                  "printcharstr: .string \"%%c\\n\"\n"
+                  "printstringstr: .string \"%%s\\n\"\n"
+                  ".text\n");
+
+    // Restante do código (hashtable, TACs, etc.)
+    
+    
+    TAC* tac;
+
+    for(tac = first; tac; tac = tac->next)
+    {   
+        switch(tac->type) 
+        {   
+            case TAC_UNKNOWN:
+            {
+                // Tratamento para código desconhecido
+                break;
+            }    
+            case TAC_SYMBOL:
+            {
+                // Tratamento para símbolos (variáveis, constantes)
+                break;
+            }
+            /* Operações aritméticas */
+            case TAC_ADD:
+            {
+                // Gera código para adição
+                
+                string res = resolveSymbol(tac->res);
+                string left = resolveSymbol(tac->op1);
+                string right = resolveSymbol(tac->op2);
+
+                fprintf(fout, "# TAC_ADD\n");
+                fprintf(fout, "\tmovl\t_%s(%%rip), %%edx\n", left.c_str());  // RIP-relative
+                fprintf(fout, "\tmovl\t_%s(%%rip), %%eax\n", right.c_str()); // RIP-relative
+                fprintf(fout, "\taddl\t%%edx, %%eax\n");
+                fprintf(fout, "\tmovl\t%%eax, _%s(%%rip)\n", res.c_str());   // RIP-relative
+                break;
+            }
+            case TAC_SUB:
+            {
+                // Gera código para subtração
+                string res = resolveSymbol(tac->res);
+                string left = resolveSymbol(tac->op1);
+                string right = resolveSymbol(tac->op2);
+
+                fprintf(fout, "# TAC_SUB\n");
+                fprintf(fout, "\tmovl\t_%s(%%rip),\t%%eax\n", left.c_str());   // eax = left
+                fprintf(fout, "\tsubl\t_%s(%%rip),\t%%eax\n", right.c_str());  // eax -= right
+                fprintf(fout, "\tmovl\t%%eax,\t_%s(%%rip)\n", res.c_str());    // res = eax
+                break;
+            }
+            case TAC_MUL:
+            {
+                // Gera código para multiplicação
+                string res = resolveSymbol(tac->res);
+                string left = resolveSymbol(tac->op1);
+                string right = resolveSymbol(tac->op2);
+
+                fprintf(fout, "# TAC_MUL\n");
+                fprintf(fout, "\tmovl\t_%s(%%rip),\t%%eax\n", left.c_str());   // eax = left
+                fprintf(fout, "\timull\t_%s(%%rip),\t%%eax\n", right.c_str()); // eax *= right
+                fprintf(fout, "\tmovl\t%%eax,\t_%s(%%rip)\n", res.c_str());    // res = eax
+                break;
+            }
+            case TAC_DIV:
+            {
+                // Gera código para divisão
+                string res = resolveSymbol(tac->res);
+                string left = resolveSymbol(tac->op1);
+                string right = resolveSymbol(tac->op2);
+
+                fprintf(fout, "# TAC_DIV\n");
+                fprintf(fout, "\tmovl\t_%s(%%rip),\t%%eax\n", left.c_str());    // eax = left (dividendo)
+                fprintf(fout, "\tcltd\n");                               // estende sinal de eax para edx
+                fprintf(fout, "\tidivl\t_%s(%%rip)\n", right.c_str());          // eax = eax / right
+                fprintf(fout, "\tmovl\t%%eax,\t_%s(%%rip)\n", res.c_str());     // res = eax (quociente)
+                break;
+            }
+
+            /* Operações lógicas */   // ASSINALAR 0 ou 1 nos testes
+            case TAC_NOT:
+            {
+                // Gera código para NOT lógico
+                string res = resolveSymbol(tac->res);
+                string left = resolveSymbol(tac->op1);  // apenas um operando
+                
+                fprintf(fout, "# TAC_NOT\n");
+                fprintf(fout, "\tmovl\t_%s(%%rip),\t%%eax\n", left.c_str());
+                fprintf(fout, "\tcmpl\t$0,\t%%eax\n");
+                fprintf(fout, "\tsete\t%%al\n");  // se for igual a 0 → true (1)
+                fprintf(fout, "\tmovzbl\t%%al,\t%%eax\n");
+                fprintf(fout, "\tmovl\t%%eax,\t_%s(%%rip)\n", res.c_str());
+                break;
+            }
+            case TAC_AND:
+            {
+                string res = resolveSymbol(tac->res);
+                string left = resolveSymbol(tac->op1);
+                string right = resolveSymbol(tac->op2);
+                
+                fprintf(fout, "# TAC_AND\n");
+                fprintf(fout, "\tmovl\t_%s,\t%%eax\n", left.c_str());
+                fprintf(fout, "\tcmpl\t$0,\t%%eax\n");
+                fprintf(fout, "\tsete\t%%al\n");               // al = (left == 0)
+                fprintf(fout, "\tmovzbl\t%%al,\t%%ecx\n");     // ecx = (left == 0)
+
+                fprintf(fout, "\tmovl\t_%s,\t%%eax\n", right.c_str());
+                fprintf(fout, "\tcmpl\t$0,\t%%eax\n");
+                fprintf(fout, "\tsete\t%%al\n");               // al = (right == 0)
+                fprintf(fout, "\tmovzbl\t%%al,\t%%eax\n");     // eax = (right == 0)
+
+                fprintf(fout, "\torl\t%%ecx,\t%%eax\n");       // eax = (left == 0) || (right == 0)
+                fprintf(fout, "\txorl\t$1,\t%%eax\n");         // eax = !eax → ambos ≠ 0
+                fprintf(fout, "\tmovl\t%%eax,\t_%s\n", res.c_str());
+                break;
+            }
+            case TAC_OR:
+            {
+                string res = resolveSymbol(tac->res);
+                string left = resolveSymbol(tac->op1);
+                string right = resolveSymbol(tac->op2);
+                
+                fprintf(fout, "# TAC_OR\n");
+                fprintf(fout, "\tmovl\t_%s,\t%%eax\n", left.c_str());
+                fprintf(fout, "\tcmpl\t$0,\t%%eax\n");
+                fprintf(fout, "\tsetne\t%%al\n");              // al = (left != 0)
+                fprintf(fout, "\tmovzbl\t%%al,\t%%ecx\n");     // ecx = (left != 0)
+
+                fprintf(fout, "\tmovl\t_%s,\t%%eax\n", right.c_str());
+                fprintf(fout, "\tcmpl\t$0,\t%%eax\n");
+                fprintf(fout, "\tsetne\t%%al\n");              // al = (right != 0)
+                fprintf(fout, "\tmovzbl\t%%al,\t%%eax\n");     // eax = (right != 0)
+
+                fprintf(fout, "\torl\t%%ecx,\t%%eax\n");       // eax = (left != 0) || (right != 0)
+                fprintf(fout, "\tmovl\t%%eax,\t_%s\n", res.c_str());
+                break;
+            }
+
+            /* Operações relacionais */
+            case TAC_GRT:
+            {
+                // Gera código para maior (>)
+                string res = resolveSymbol(tac->res);
+                string left = resolveSymbol(tac->op1);
+                string right = resolveSymbol(tac->op2);
+                
+                fprintf(fout, "# TAC_GRT\n");
+                fprintf(fout, "\tmovl\t_%s,\t%%eax\n", left.c_str());
+                fprintf(fout, "\tcmpl\t_%s,\t%%eax\n", right.c_str());
+                fprintf(fout, "\tsetg\t%%al\n");
+                fprintf(fout, "\tmovzbl\t%%al,\t%%eax\n");
+                fprintf(fout, "\tmovl\t%%eax,\t_%s\n", res.c_str());
+                break;
+            }
+            case TAC_GE:
+            {
+                // Gera código para maior ou igual (>=)
+                string res = resolveSymbol(tac->res);
+                string left = resolveSymbol(tac->op1);
+                string right = resolveSymbol(tac->op2);
+
+                fprintf(fout, "# TAC_GE\n");
+                fprintf(fout, "\tmovl\t_%s,\t%%eax\n", left.c_str());
+                fprintf(fout, "\tcmpl\t_%s,\t%%eax\n", right.c_str());
+                fprintf(fout, "\tsetge\t%%al\n");
+                fprintf(fout, "\tmovzbl\t%%al,\t%%eax\n");
+                fprintf(fout, "\tmovl\t%%eax,\t_%s\n", res.c_str());
+                break;
+            }
+            case TAC_LESS:
+            {
+                // Gera código para menor que (<)
+                string res = resolveSymbol(tac->res);
+                string left = resolveSymbol(tac->op1);
+                string right = resolveSymbol(tac->op2);
+                
+                fprintf(fout, "# TAC_LESS\n");
+                fprintf(fout, "\tmovl\t_%s,\t%%eax\n", left.c_str());
+                fprintf(fout, "\tcmpl\t_%s,\t%%eax\n", right.c_str());
+                fprintf(fout, "\tsetl\t%%al\n");
+                fprintf(fout, "\tmovzbl\t%%al,\t%%eax\n");
+                fprintf(fout, "\tmovl\t%%eax,\t_%s\n", res.c_str());
+                break;
+            }
+            case TAC_LE:
+            {
+                // Gera código para menor ou igual (<=)
+                string res = resolveSymbol(tac->res);
+                string left = resolveSymbol(tac->op1);
+                string right = resolveSymbol(tac->op2);
+                
+                fprintf(fout, "# TAC_LE\n");
+                fprintf(fout, "\tmovl\t_%s,\t%%eax\n", left.c_str());
+                fprintf(fout, "\tcmpl\t_%s,\t%%eax\n", right.c_str());
+                fprintf(fout, "\tsetle\t%%al\n");
+                fprintf(fout, "\tmovzbl\t%%al,\t%%eax\n");
+                fprintf(fout, "\tmovl\t%%eax,\t_%s\n", res.c_str());
+                break;
+            }
+            case TAC_EQUAL:
+            {
+                // Gera código para igualdade (==)
+                string res = resolveSymbol(tac->res);
+                string left = resolveSymbol(tac->op1);
+                string right = resolveSymbol(tac->op2);
+                
+                fprintf(fout, "# TAC_EQUAL\n");
+                fprintf(fout, "\tmovl\t_%s,\t%%eax\n", left.c_str());
+                fprintf(fout, "\tcmpl\t_%s,\t%%eax\n", right.c_str());
+                fprintf(fout, "\tsete\t%%al\n");
+                fprintf(fout, "\tmovzbl\t%%al,\t%%eax\n");
+                fprintf(fout, "\tmovl\t%%eax,\t_%s\n", res.c_str());
+                break;
+            }
+            case TAC_DIF:
+            {
+                // Gera código para diferença (!=)
+                string res = resolveSymbol(tac->res);
+                string left = resolveSymbol(tac->op1);
+                string right = resolveSymbol(tac->op2);
+
+                fprintf(fout, "# TAC_DIF\n");
+                fprintf(fout, "\tmovl\t_%s,\t%%eax\n", left.c_str());
+                fprintf(fout, "\tcmpl\t_%s,\t%%eax\n", right.c_str());
+                fprintf(fout, "\tsetne\t%%al\n");
+                fprintf(fout, "\tmovzbl\t%%al,\t%%eax\n");
+                fprintf(fout, "\tmovl\t%%eax,\t_%s\n", res.c_str());
+                break;
+            }
+
+            /* Manipulação de variáveis */
+
+
+            case TAC_COPY:
+            {
+                string dest = resolveSymbol(tac->res);
+                string src = resolveSymbol(tac->op1); 
+                
+
+
+                // TRATAMENTO DE NOME PARA LITERAIS
+                if(tac->op1->type == SYMBOL_LIT_CHAR)
+                {
+                    src = sanitize_literal(src, "_char");
+                }
+
+                // ATRIBUIÇÕES DE LITERAIS (FUNCIONANDO)
+                if(tac->res->datatype == REAL && tac->op1->datatype == REAL)
+                {
+                    fprintf(fout, "# TAC COPY %s = %s\n", dest.c_str(), src.c_str());
+                    fprintf(fout, "\tmovss\t_%s(%%rip), %%xmm0\n", src.c_str());
+                    fprintf(fout, "\tmovss\t%%xmm0, _%s(%%rip)\n", dest.c_str());
+                }
+                else
+                {
+                    fprintf(fout, "# TAC COPY %s = %s\n", dest.c_str(), src.c_str());
+                    fprintf(fout, "\tmovl\t_%s(%%rip), %%eax\n", src.c_str());
+                    fprintf(fout, "\tmovl\t%%eax, _%s(%%rip)\n", dest.c_str());
+                }
+                break;
+
+
+            }
+        
+            case TAC_VET_STORE:
+            {
+                string dest = resolveSymbol(tac->res);
+                string value = resolveSymbol(tac->op2);
+
+                fprintf(fout, "# TAC_VET_STORE %s[", dest.c_str());
+                
+                // Tratamento especial para o índice
+                if(tac->op1->type == SYMBOL_LIT_INT) {
+                    // Para literais, use o valor direto
+
+                    int index_val = stoi(tac->op1->text);
+                    fprintf(fout, "%d] = %s\n", index_val, value.c_str());
+                    int offset = index_val * 4;
+                    fprintf(fout, "\tmovl\t_%s(%%rip), %%eax\n", value.c_str());
+                    fprintf(fout, "\tmovl\t%%eax, _%s+%d(%%rip)\n", dest.c_str(), offset);
+                } 
+                else {
+                    // Para variáveis, use o código atual
+                    string index = resolveSymbol(tac->op1);
+                    fprintf(fout, "%s] = %s\n", index.c_str(), value.c_str());
+                    fprintf(fout, "\tmovl\t_%s(%%rip), %%eax\n", index.c_str());
+                    fprintf(fout, "\tcltq\n");
+                    fprintf(fout, "\tmovl\t_%s(%%rip), %%edx\n", value.c_str());
+                    fprintf(fout, "\tleaq\t_%s(%%rip), %%rcx\n", dest.c_str());
+                    fprintf(fout, "\tmovl\t%%edx, (%%rcx,%%rax,4)\n");
+                }
+                break;
+            }
+            
+            case TAC_VET_LOAD:
+            {
+                // Gera código para carregar de vetor
+                string dest = resolveSymbol(tac->res);
+                string src = resolveSymbol(tac->op1);
+                string index = resolveSymbol(tac->op2);
+                
+                fprintf(fout, "# TAC_VET_LOAD\n");
+                fprintf(fout, "\tmovl\t_%s(%%rip), %%eax\n", index.c_str());             // carrega índice em EAX
+                fprintf(fout, "\tleaq\t_%s(%%rip), %%rdi\n", src.c_str());              // carrega endereço base do vetor em RDI
+                fprintf(fout, "\tmovl\t(%%rdi,%%rax,4), %%edx\n");                       // edx = vetor[eax]
+                fprintf(fout, "\tmovl\t%%edx, _%s(%%rip)\n", dest.c_str());              // dest = edx
+                break;
+            }
+
+            /* Controle de fluxo */
+
+            // TODO: VERIFICAR
+            case TAC_JFALSE:
+            {
+                // Gera código para jump-if-false (pula se a condição for falsa/0)
+                string cond = resolveSymbol(tac->op1);
+                string label = resolveSymbol(tac->res);
+                
+                fprintf(fout, "# TAC_JFALSE (if !%s goto %s)\n", cond.c_str(), label.c_str());
+                fprintf(fout, "\tmovl\t_%s(%%rip), %%eax\n", cond.c_str());  // Carrega a condição
+                fprintf(fout, "\tcmpl\t$0, %%eax\n");                       // Compara com 0
+                fprintf(fout, "\tje\t%s\n", label.c_str());                 // Pula se igual a 0 (false)
+                break;
+            }
+
+
+            // TODO: VERIFICAR
+            case TAC_LABEL:
+            {
+                // Gera código para rótulo (label)
+                string label = resolveSymbol(tac->res);
+                
+                fprintf(fout, "# TAC_LABEL %s\n", label.c_str());
+                fprintf(fout, "%s:\n", label.c_str());  // Define o label
+                break;
+            }
+            
+            // TODO: VERIFICAR
+            case TAC_JUMP:
+            {
+                // Gera código para jump incondicional
+                string label = resolveSymbol(tac->res);
+                
+                fprintf(fout, "# TAC_JUMP (goto %s)\n", label.c_str());
+                fprintf(fout, "\tjmp\t%s\n", label.c_str());  // Salto incondicional
+                break;
+            }
+
+            /* Funções */
+            case TAC_BEGINFUN:
+            {
+                string funcName = tac->res ? tac->res->text : "";
+                fprintf(fout, "\t# BEGIN_FUN\n");
+                fprintf(fout, "\t.globl\t%s\n", funcName.c_str());
+                fprintf(fout, "\t.type\t%s, @function\n", funcName.c_str());
+                fprintf(fout, "%s:\n", funcName.c_str());
+                fprintf(fout, "\tpushq\t%%rbp\n");
+                fprintf(fout, "\tmovq\t%%rsp, %%rbp\n");
+                break;
+            }
+
+            case TAC_ENDFUN:
+            {
+                // Gera epílogo de função
+
+                fprintf(fout, "\t# TAC_ENDFUN\n"
+	                        "\tpopq	%%rbp\n"
+	                        "\tret\n"
+                        );
+                break;
+            }
+
+            // TODO: VERIFICAR
+            case TAC_CALL:
+            {
+                string funcName = resolveSymbol(tac->op1);
+                fprintf(fout, "# TAC_CALL %s\n", funcName.c_str());
+
+                // System V ABI - argumentos inteiros: %edi, %esi, %edx, %ecx, %r8d, %r9d
+                const char* intRegs[] = {"%edi", "%esi", "%edx", "%ecx", "%r8d", "%r9d"};
+                int argCount = 0;
+
+                // Processa cada argumento da pilha
+                for (auto sym : argStack) {
+                    if (argCount >= 6) {
+                        fprintf(stderr, "Erro: Número de argumentos excede o suportado\n");
+                        exit(1);
+                    }
+
+                    string argName = resolveSymbol(sym);
+                    // Sempre passa como inteiro (adequado para seu caso)
+                    fprintf(fout, "\tmovl\t_%s(%%rip), %s\n", argName.c_str(), intRegs[argCount]);
+                    argCount++;
+                }
+
+                // Chama função
+                fprintf(fout, "\tcall\t%s\n", funcName.c_str());
+
+                // Armazena resultado se necessário
+                if (tac->res) {
+                    string retVar = resolveSymbol(tac->res);
+                    fprintf(fout, "\tmovl\t%%eax, _%s(%%rip)\n", retVar.c_str());
+                }
+
+                argStack.clear();
+                break;
+            }
+
+
+
+            // TODO: VERIFICAR
+            case TAC_ARG:
+            {
+                // Empilha argumentos para a próxima chamada
+                fprintf(fout, "# TAC_ARG\n");
+                if (tac->res)
+                    argStack.push_back(tac->res);
+                break;
+            }
+
+            /* Operações especiais */
+
+            // TODO: VERIFICAR
+            case TAC_RET:
+            {
+                fprintf(fout, "# TAC_RET\n");
+                
+                // Encontrar o TAC_BEGINFUN correspondente
+                TAC* func_start = tac;
+                while(func_start && func_start->type != TAC_BEGINFUN) {
+                    func_start = func_start->prev;
+                }
+                
+                if (tac->res) {
+                    string ret = resolveSymbol(tac->res);
+                    
+                    // Verificar o tipo de retorno da função
+                    if (func_start && func_start->res && func_start->res->datatype == REAL) {
+                        fprintf(fout, "\tmovss\t_%s(%%rip), %%xmm0\n", ret.c_str());
+                    } else {
+                        fprintf(fout, "\tmovl\t_%s(%%rip), %%eax\n", ret.c_str());
+                    }
+                }
+                
+                fprintf(fout, "\tpopq\t%%rbp\n");
+                fprintf(fout, "\tret\n");
+                break;
+            }
+
+            // TODO: VERIFICAR
+            case TAC_PRINT:
+            {
+                // Gera código para impressão
+                fprintf(fout, "# TAC PRINT\n");
+                string varName = tac->res ? tac->res->text.c_str() : "unknown";
+                resolvePrint(fout, tac->res, varName,tac);
+
+                break;
+                   
+            }
+
+            // TODO: VERIFICAR
+            case TAC_READ:
+            {
+                // Gera código para leitura de entrada
+                break;
+            }
+
+            default:
+                // Tratamento para casos não previstos
+                fprintf(stderr, "Erro: TAC desconhecido (tipo %d)\n", tac->type);
+                break;
+        }
+    }
+
+    printAsm(fout); // ADIÇÃO DOS DADOS (TABELA DE SIMBOLOS)
+    fclose(fout);
 }
