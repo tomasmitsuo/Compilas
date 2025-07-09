@@ -56,28 +56,46 @@ func_real:
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
-# TAC_LABEL ______Label_____var_2
-______Label_____var_2:
-# TAC_LESS
-	movl	_z,	%eax
-	cmpl	__001,	%eax
-	setl	%al
-	movzbl	%al,	%eax
-	movl	%eax,	_______Temp_____var_3
-# TAC_JFALSE (if !______Temp_____var_3 goto ______Label_____var_3)
-	movl	_______Temp_____var_3(%rip), %eax
-	cmpl	$0, %eax
-	je	______Label_____var_3
-# TAC_LESS
-	movl	_z,	%eax
-	cmpl	__5,	%eax
-	setl	%al
-	movzbl	%al,	%eax
-	movl	%eax,	_______Temp_____var_4
-# TAC_JFALSE (if !______Temp_____var_4 goto ______Label_____var_0)
-	movl	_______Temp_____var_4(%rip), %eax
-	cmpl	$0, %eax
-	je	______Label_____var_0
+# TAC_ARG
+# TAC_ARG
+# TAC_CALL func_real
+	movl	_real1(%rip), %edi
+	movl	_real2(%rip), %esi
+	call	func_real
+	movl	%eax, _______Temp_____var_3(%rip)
+# TAC PRINT
+# PRINT RETORNO DE FUNCAO func_real
+	cvtps2pd	%xmm0, %xmm0
+	leaq	printfloatstr(%rip), %rdi
+	movl	$1, %eax
+	call	printf@PLT
+# TAC_ARG
+# TAC_ARG
+# TAC_ARG
+# TAC_CALL func
+	movl	_arg1(%rip), %edi
+	movl	_arg2(%rip), %esi
+	movl	_arg3(%rip), %edx
+	call	func
+	movl	%eax, _______Temp_____var_4(%rip)
+# TAC PRINT
+# PRINT RETORNO DE FUNCAO func
+	movl	%eax, %esi
+	leaq	printintstr(%rip), %rdi
+	movl	$0, %eax
+	call	printf@PLT
+# TAC_ARG
+# TAC_ARG
+# TAC_ARG
+# TAC_CALL func
+	movl	_arg1(%rip), %edi
+	movl	_arg2(%rip), %esi
+	movl	_arg3(%rip), %edx
+	call	func
+	movl	%eax, _______Temp_____var_5(%rip)
+# TAC COPY x = ______Temp_____var_5
+	movl	_______Temp_____var_5(%rip), %eax
+	movl	%eax, _x(%rip)
 # TAC PRINT
 	movl	_x(%rip), %esi
 	leaq	printintstr(%rip), %rax
@@ -85,60 +103,41 @@ ______Label_____var_2:
 	movl	$0, %eax
 	call	printf@PLT
 	movl	$0, %eax;
-# TAC PRINT
-	movl	_x1(%rip), %esi
-	leaq	printintstr(%rip), %rax
-	movq	%rax, %rdi
-	movl	$0, %eax
-	call	printf@PLT
-	movl	$0, %eax;
-# TAC PRINT
-	movl	_y(%rip), %esi
-	leaq	printintstr(%rip), %rax
-	movq	%rax, %rdi
-	movl	$0, %eax
-	call	printf@PLT
-	movl	$0, %eax;
 # TAC_VET_LOAD
-	movl	__3(%rip), %eax
-	leaq	_vet2(%rip), %rdi
-	movl	(%rdi,%rax,4), %edx
-	movl	%edx, _______Temp_____var_5(%rip)
-# TAC PRINT
-# PRINT VETOR vet2[_3]
-	movl	_vet2+12(%rip), %esi
-	leaq	printintstr(%rip), %rdi
-	movl	$0, %eax
-	call	printf@PLT
-# TAC_JUMP (goto ______Label_____var_1)
-	jmp	______Label_____var_1
-# TAC_LABEL ______Label_____var_0
-______Label_____var_0:
-# TAC_VET_LOAD
-	movl	__0(%rip), %eax
+	movl	_x(%rip), %eax
 	leaq	_vet2(%rip), %rdi
 	movl	(%rdi,%rax,4), %edx
 	movl	%edx, _______Temp_____var_6(%rip)
 # TAC PRINT
-# PRINT VETOR vet2[_0]
-	movl	_vet2+0(%rip), %esi
+# PRINT VETOR vet2[x]
+	movl	_x(%rip), %eax
+	leaq	_vet2(%rip), %rdi
+	movl	(%rdi,%rax,4), %esi
 	leaq	printintstr(%rip), %rdi
 	movl	$0, %eax
 	call	printf@PLT
-# TAC_LABEL ______Label_____var_1
-______Label_____var_1:
-# TAC_ADD
-	movl	_z(%rip), %edx
-	movl	__1(%rip), %eax
-	addl	%edx, %eax
+# TAC_ARG
+# TAC_ARG
+# TAC_ARG
+# TAC_CALL func
+	movl	_arg1(%rip), %edi
+	movl	_arg2(%rip), %esi
+	movl	_arg3(%rip), %edx
+	call	func
 	movl	%eax, _______Temp_____var_7(%rip)
-# TAC COPY z = ______Temp_____var_7
+# TAC_VET_LOAD
 	movl	_______Temp_____var_7(%rip), %eax
-	movl	%eax, _z(%rip)
-# TAC_JUMP (goto ______Label_____var_2)
-	jmp	______Label_____var_2
-# TAC_LABEL ______Label_____var_3
-______Label_____var_3:
+	leaq	_vet2(%rip), %rdi
+	movl	(%rdi,%rax,4), %edx
+	movl	%edx, _______Temp_____var_8(%rip)
+# TAC PRINT
+# PRINT VETOR vet2[______Temp_____var_7]
+	movl	_______Temp_____var_7(%rip), %eax
+	leaq	_vet2(%rip), %rdi
+	movl	(%rdi,%rax,4), %esi
+	leaq	printintstr(%rip), %rdi
+	movl	$0, %eax
+	call	printf@PLT
 # TAC_RET
 	movl	__0(%rip), %eax
 	popq	%rbp
@@ -152,8 +151,6 @@ ______Label_____var_3:
 __char_d:	.byte	'd'
 .globl __0
 __0:	.long	0
-.globl __001
-__001:	.long	100
 .globl __01
 __01:	.long	10
 .globl __1
@@ -176,14 +173,6 @@ __323:	.long	323
 __4:	.long	4
 .globl __5
 __5:	.long	5
-.globl _______Label_____var_0
-_______Label_____var_0:	.long	0
-.globl _______Label_____var_1
-_______Label_____var_1:	.long	0
-.globl _______Label_____var_2
-_______Label_____var_2:	.long	0
-.globl _______Label_____var_3
-_______Label_____var_3:	.long	0
 .globl _______Temp_____var_0
 _______Temp_____var_0:	.long	0
 .globl _______Temp_____var_1
@@ -200,6 +189,8 @@ _______Temp_____var_5:	.long	0
 _______Temp_____var_6:	.long	0
 .globl _______Temp_____var_7
 _______Temp_____var_7:	.long	0
+.globl _______Temp_____var_8
+_______Temp_____var_8:	.long	0
 .globl _a
 _a:	.long	0	# Parâmetro da função
 .globl _arg1

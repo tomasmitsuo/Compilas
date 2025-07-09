@@ -21,17 +21,11 @@ real func_real(real r1, real r2)
 }
 int main()
 {
-    while ((z < 001)) do
-    {
-        if ((z < 5))
-        {
-            print x x1 y vet2[3];
-        }
-        else
-        {
-            print vet2[0];
-        }
-        z = (z + 1);
-    }
+    print func_real(real1, real2);
+    print func(arg1, arg2, arg3);
+    x = func(arg1, arg2, arg3);
+    print x;
+    print vet2[x];
+    print vet2[func(arg1, arg2, arg3)];
     return 0;
 }

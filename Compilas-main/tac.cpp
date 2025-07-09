@@ -549,7 +549,6 @@ std::string sanitize_literal(const std::string& text, const std::string& prefix)
 
 
 
-// TODO: ADICIONAR PRINTS DE FUNÇÃO
 
 void resolvePrint(FILE* fout,SYMBOL* res, string varName, TAC* currentTac)
 {   
@@ -1082,7 +1081,6 @@ void generateAsm(TAC* first)
 
             /* Controle de fluxo */
 
-            // TODO: VERIFICAR
             case TAC_JFALSE:
             {
                 // Gera código para jump-if-false (pula se a condição for falsa/0)
@@ -1097,7 +1095,6 @@ void generateAsm(TAC* first)
             }
 
 
-            // TODO: VERIFICAR
             case TAC_LABEL:
             {
                 // Gera código para rótulo (label)
@@ -1108,7 +1105,6 @@ void generateAsm(TAC* first)
                 break;
             }
             
-            // TODO: VERIFICAR
             case TAC_JUMP:
             {
                 // Gera código para jump incondicional
@@ -1125,7 +1121,6 @@ void generateAsm(TAC* first)
 
                 string funcName = tac->res ? tac->res->text : "";
 
-               // if(funcName != "main") insideAuxFunc =true;
 
                 fprintf(fout, "\t# BEGIN_FUN\n");
                 fprintf(fout, "\t.globl\t%s\n", funcName.c_str());
@@ -1133,7 +1128,6 @@ void generateAsm(TAC* first)
                 fprintf(fout, "%s:\n", funcName.c_str());
                 fprintf(fout, "\tpushq\t%%rbp\n");
                 fprintf(fout, "\tmovq\t%%rsp, %%rbp\n");
-                //TODO: CRIAR CASO PARA ADICIONAR OS ARGUMENTOS NOS PARAMETROS DA FUNCÃO
                 
                 if (tac->res && tac->res->isFunc && !tac->res->name_par_func.empty()) 
                 {
@@ -1167,7 +1161,6 @@ void generateAsm(TAC* first)
                 break;
             }
 
-            // TODO: VERIFICAR
             case TAC_CALL:
             {
                 string funcName = resolveSymbol(tac->op1);
@@ -1203,7 +1196,6 @@ void generateAsm(TAC* first)
 
 
 
-            // TODO: VERIFICAR
             case TAC_ARG:
             {
                 // Empilha argumentos para a próxima chamada
@@ -1215,7 +1207,6 @@ void generateAsm(TAC* first)
 
             /* Operações especiais */
 
-            // TODO: VERIFICAR
             case TAC_RET:
             {
                 fprintf(fout, "# TAC_RET\n");
@@ -1242,7 +1233,6 @@ void generateAsm(TAC* first)
                 break;
             }
 
-            // TODO: VERIFICAR
             case TAC_PRINT:
             {
                 // Gera código para impressão
@@ -1250,11 +1240,9 @@ void generateAsm(TAC* first)
                 string varName = tac->res ? tac->res->text.c_str() : "unknown";
                 resolvePrint(fout, tac->res, varName,tac);
 
-                break;
-                   
+                break; 
             }
 
-            // TODO: VERIFICAR
             case TAC_READ:
             {
                 // Gera código para leitura de entrada

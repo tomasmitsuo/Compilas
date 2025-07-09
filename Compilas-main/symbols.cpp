@@ -169,7 +169,6 @@ void printAsm(FILE *fout)
             
             // Parâmetros inteiros (incluindo byte)
 
-            // TODO: VERIFICAR SE ESTÁ DENTRO DE UMA ROTINA AUXILIAR
             if (entry.second->datatype == INT || entry.second->datatype == BYTE) {
                 fprintf(fout, "_%s:\t.long\t0\t# Parâmetro da função\n", paramName.c_str());
             }

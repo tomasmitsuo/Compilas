@@ -23,6 +23,12 @@ void astPrint(AST* ast, int level);
 
 int main(int argc, char** argv)
 {
+
+    // TODO: IMPLEMENTAR A ETAPA 7
+
+    // i) RECUPERAÇÃO DE ERROS
+    // ii) OTIMIZAÇÃO DE CÓDIGO
+    
     if(argc < 3)
     {
         fprintf(stderr, "Call filename\n"); exit(1);

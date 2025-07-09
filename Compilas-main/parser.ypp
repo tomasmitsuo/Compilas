@@ -22,6 +22,8 @@ extern const char* outputFile;
 int yylex();
 void yyerror(string msg);
 int getLineNumber();
+
+bool hasSyntaxError = false;
 %}
 
 %union {
@@ -91,8 +93,14 @@ int getLineNumber();
 %%
 program: ldecl          { $$ = $1;
                           TAC* code;
-                          astPrint($$,0); printf("\n");
+
+                          // IMPRESSÃO DA AST
                           
+                          //astPrint($$,0); printf("\n");
+                          
+                          // ===================================================================================================
+                          // ANÁLISE SEMÂNTICA
+
                           // DECLARACOES
                           checkAndSetDeclarations($$);
                           checkUndeclared();
@@ -111,14 +119,24 @@ program: ldecl          { $$ = $1;
                           checkNumParFunc($$);
                           checkTypeParFunc($$);
                           checkReturn($$);
-                          
+                          // ===================================================================================================
+                          // RECUPERAÇÃO DE ERROS
+
+                          if (hasSyntaxError) 
+                          {
+                                fprintf(stderr, "\nATENÇÃO: Erros de sintaxe encontrados. Etapas de geração de código foram abortadas.\n");
+                                return 3;
+                          }
+
+                          // ===================================================================================================
                           // CONSTRUÇÃO E PRINT DAS TACS
+
                           code = generateCode($$);
                           tacPrintBackwards(code);
 
                           code = tacReverse(code);
                           generateAsm(code);
-
+                          // ===================================================================================================
 
                           std::ofstream outFile(outputFile);
                           if (!outFile.is_open())
@@ -131,7 +149,8 @@ program: ldecl          { $$ = $1;
                         }
     ;
 
-ldecl: dec ldecl        { vector<AST*> children = {$1,$2}; $$ = new AST(AST_LDECL, children); }
+ldecl: error ';' ldecl { yyerror("Declaração inválida. Recuperado até o ponto e vírgula."); $$ = $3; }
+     |dec ldecl        { vector<AST*> children = {$1,$2}; $$ = new AST(AST_LDECL, children); }
      |                  { $$ = nullptr; }
      ;
 
@@ -201,6 +220,7 @@ fundec: KW_INT TK_IDENTIFIER '('parlist')' cmd_blc  { vector<AST*> children = {$
       ;
 
 cmd_blc: '{'cmd_lst'}' { vector<AST*> children = {$2}; $$ = new AST(AST_CMD_BLOCK, children); }
+       | '{' error '}' { yyerror("Bloco de comandos inválido. Recuperado até a chave de fechamento."); $$ = nullptr; }
        ;
 
 cmd_lst: { $$ = nullptr; }
@@ -234,6 +254,7 @@ cmd: TK_IDENTIFIER '=' expr ';'                 { vector<AST*> children = {$3}; 
     |KW_DO cmd KW_WHILE expr ';'                { vector<AST*> children = {$2, $4}; $$ = new AST(AST_DO_WHILE, children);}
     |cmd_blc                                    { $$ = $1; }
     | ';'                                       { $$ = nullptr; }
+    | error ';'                           { yyerror("Comando inválido. Recuperado até o ponto e vírgula."); $$ = nullptr; }
     ;
 
 // =============================================================================================
@@ -277,6 +298,8 @@ expr: func                      { $$ = $1; }
 
 void yyerror(string msg)
 {
-    fprintf(stderr, "ERRO DE SINTAXE. ERRO NA linha %d", lineNumber);
-    exit(3);
+    fprintf(stderr, "ERRO DE SINTAXE. ERRO NA linha %d\n", lineNumber);
+
+    hasSyntaxError = true;
+    //exit(3);
 }
