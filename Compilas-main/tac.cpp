@@ -1,5 +1,9 @@
 #include <vector>
 #include <algorithm>
+#include <iostream>
+#include <unordered_map>
+#include <unordered_set>
+
 #include "symbols.hpp"
 #include "tac.hpp"
 #include "ast.hpp"
@@ -25,7 +29,8 @@ string TACTypenames[] = {
 
 // FUNÇÃO DE REVERSÃO DA TAC
 
-TAC* tacReverse(TAC* tac) {
+TAC* tacReverse(TAC* tac) 
+{
     TAC* t = tac;
     for (t = tac; t->prev; t = t->prev)
         t->prev->next = t;
@@ -73,8 +78,6 @@ TAC* makeFunc(AST* node, TAC* code1)
 {
     // Cria TAC de início da função
             TAC* beginFunc = new TAC(TAC_BEGINFUN, node->symbol, nullptr, nullptr);
-            
-            // Cria TAC de fim da função
             TAC* endFunc = new TAC(TAC_ENDFUN, node->symbol, nullptr, nullptr);
             
             // Junta: início + código do corpo da função + fim
@@ -525,6 +528,7 @@ string resolveSymbol(SYMBOL* symbol) // FUNÇÃO QUE TRATA OS SIMBOLOS, FORMATAN
 }
 
 
+
 std::string sanitize_literal(const std::string& text, const std::string& prefix)
 {
     std::string result = prefix;
@@ -546,7 +550,6 @@ std::string sanitize_literal(const std::string& text, const std::string& prefix)
     }
     return result;
 }
-
 
 
 
@@ -717,7 +720,8 @@ void resolvePrint(FILE* fout,SYMBOL* res, string varName, TAC* currentTac)
     }      
 }
 
-// CRIAÇÃO DO CÓDIGO (ASSEMBLY)
+
+
 void generateAsm(TAC* first) 
 {
     std::vector<SYMBOL*> argStack;  // Stack temporário para TAC_ARG
@@ -1258,4 +1262,136 @@ void generateAsm(TAC* first)
 
     printAsm(fout); // ADIÇÃO DOS DADOS (TABELA DE SIMBOLOS)
     fclose(fout);
+}
+
+std::string reverseString(const std::string& s) {
+    std::string reversed = s;
+    std::reverse(reversed.begin(), reversed.end());
+    return reversed;
+}
+
+void propagateConstants(TAC* code, std::unordered_map<std::string, SYMBOL*>& constValues) {
+    bool changed;
+    do {
+        changed = false;
+        for (TAC* tac = code; tac != nullptr; tac = tac->next) {
+            // Substitui operandos por constantes conhecidas
+            if (tac->op1 && constValues.count(tac->op1->text)) {
+                tac->op1 = constValues[tac->op1->text];
+                changed = true;
+            }
+            if (tac->op2 && constValues.count(tac->op2->text)) {
+                tac->op2 = constValues[tac->op2->text];
+                changed = true;
+            }
+            
+            // Dobramento de constantes em tempo real
+            if (tac->type >= TAC_ADD && tac->type <= TAC_DIV) {
+                if (tac->op1 && tac->op1->type == SYMBOL_LIT_INT &&
+                    tac->op2 && tac->op2->type == SYMBOL_LIT_INT) {
+                    
+                    
+                    std::string revText1 = reverseString(tac->op1->text);
+                    std::string revText2 = reverseString(tac->op2->text);
+                    int val1 = std::stoi(revText1);
+                    int val2 = std::stoi(revText2);
+                    int result;
+                    
+                    switch(tac->type) {
+                        case TAC_ADD: result = val1 + val2; break;
+                        case TAC_SUB: result = val1 - val2; break;
+                        case TAC_MUL: result = val1 * val2; break;
+                        case TAC_DIV: if (val2 != 0) result = val1 / val2; else continue;
+                        default: continue;
+                    }
+
+                    std::string resultStr = std::to_string(result);
+                    std::string finalResultStr = reverseString(resultStr);
+                    
+                    SYMBOL* constant = symbolInsert(SYMBOL_LIT_INT, 
+                                                   const_cast<char*>(finalResultStr.c_str()),
+                                                   INT, false, 0, false, 0, {}, {});
+                    
+                    if (tac->res) {
+                        constValues[tac->res->text] = constant;
+                        changed = true;
+                    }
+                    
+                    // Substitui a operação por uma cópia
+                    tac->type = TAC_COPY;
+                    tac->op1 = constant;
+                    tac->op2 = nullptr;
+                }
+            }
+        }
+    } while (changed); // Repete até não haver mais mudanças
+}
+
+
+
+TAC* eliminateDeadCode(TAC* code) 
+{
+    std::unordered_set<std::string> usedVars;
+
+    // --- Primeira passada: coletar variáveis usadas ---
+    for (TAC* tac = code; tac != nullptr; tac = tac->next) 
+    {
+        if (tac->op1) usedVars.insert(tac->op1->text);
+        if (tac->op2) usedVars.insert(tac->op2->text);
+
+        // 'res' pode ser leitura em algumas instruções
+        switch (tac->type) 
+        {
+            case TAC_PRINT:
+            case TAC_RET:
+            case TAC_ARG:
+                if (tac->res) usedVars.insert(tac->res->text);
+                break;
+            default:
+                break;
+        }
+    }
+
+    // --- Segunda passada: eliminar TACs com resultados não utilizados ---
+    TAC* newCode = nullptr;
+    TAC* last = nullptr;
+
+    for (TAC* tac = code; tac != nullptr; ) {
+        TAC* next = tac->next;
+        bool isDead = false;
+
+        // Marca como morta se for uma atribuição ou operação que escreve em 'res' que nunca será usada
+        if ((tac->type == TAC_COPY || (tac->type >= TAC_ADD && tac->type <= TAC_DIV)) &&
+            tac->res && !usedVars.count(tac->res->text)) {
+            isDead = true;
+        }
+
+        // Se não for morta, insere na nova lista
+        if (!isDead) {
+            if (!newCode) {
+                newCode = tac;
+                last = tac;
+                last->prev = nullptr;
+            } else {
+                last->next = tac;
+                tac->prev = last;
+                last = tac;
+            }
+        }
+
+        tac = next;
+    }
+
+    if (last) last->next = nullptr;
+
+    return newCode;
+}
+
+
+
+TAC* optimizeTAC(TAC* code) {
+    std::unordered_map<std::string, SYMBOL*> constValues;
+    propagateConstants(code, constValues);
+    code = eliminateDeadCode(code);
+    return code;
 }

@@ -571,17 +571,17 @@ static const yytype_int8 yytranslate[] =
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
-static const yytype_int16 yyrline[] =
+static const yytype_uint8 yyrline[] =
 {
-       0,    99,    99,   160,   161,   162,   163,   164,   167,   168,
-     169,   176,   177,   178,   179,   180,   181,   182,   183,   184,
-     191,   192,   195,   196,   198,   199,   202,   203,   204,   205,
-     206,   207,   214,   215,   218,   219,   222,   223,   224,   227,
-     228,   229,   232,   233,   236,   237,   244,   245,   248,   249,
-     256,   257,   258,   259,   260,   261,   262,   263,   264,   265,
-     266,   267,   272,   273,   276,   277,   282,   284,   285,   286,
-     287,   288,   289,   291,   292,   293,   294,   295,   296,   297,
-     298,   299,   300,   301,   302,   303,   304
+       0,    99,    99,   102,   103,   104,   105,   106,   109,   110,
+     111,   118,   119,   120,   121,   122,   123,   124,   125,   126,
+     133,   134,   137,   138,   140,   141,   144,   145,   146,   147,
+     148,   149,   156,   157,   160,   161,   164,   165,   166,   169,
+     170,   171,   174,   175,   178,   179,   186,   187,   190,   191,
+     198,   199,   200,   201,   202,   203,   204,   205,   206,   207,
+     208,   209,   214,   215,   218,   219,   224,   226,   227,   228,
+     229,   230,   231,   233,   234,   235,   236,   237,   238,   239,
+     240,   241,   242,   243,   244,   245,   246
 };
 #endif
 
@@ -1312,573 +1312,516 @@ yyreduce:
     {
   case 2: /* program: ldecl  */
 #line 99 "parser.ypp"
-                        { (yyval.ast) = (yyvsp[0].ast); programAST = (yyval.ast);
-                        //   TAC* code;
-
-                        //   // IMPRESSÃO DA AST
-                          
-                        //   astPrint($$,0); printf("\n");
-                          
-                        //   // ===================================================================================================
-                        //   // ANÁLISE SEMÂNTICA
-
-                        //   // DECLARACOES
-                        //   checkAndSetDeclarations($$);
-                        //   checkUndeclared();
-                          
-                        //   //ATRIBUICOES E OPERACOES
-                        //   checkOperands($$);
-                        //   checkAssignments($$);
-                          
-                        //   // VARIAVEIS
-                        //   checkVariables($$);
-
-                        //   // VETORES
-                        //   checkVectors($$);
-                        
-                        //   // FUNÇÕES
-                        //   checkNumParFunc($$);
-                        //   checkTypeParFunc($$);
-                        //   checkReturn($$);
-                        //   // ===================================================================================================
-                        //   // RECUPERAÇÃO DE ERROS
-
-                        //   if (hasSyntaxError) 
-                        //   {
-                        //         fprintf(stderr, "\nATENÇÃO: Erros de sintaxe encontrados. Etapas de geração de código foram abortadas.\n");
-                        //         //exit(3);
-                        //   }
-                        //   else
-                        //   {
-                        //         code = generateCode($$);
-                        //         tacPrintBackwards(code);
-
-                        //         code = tacReverse(code);
-                        //         generateAsm(code);
-                        //   }
-                        //   // ===================================================================================================
-                        //   // CONSTRUÇÃO E PRINT DAS TACS
-
-                        //   // ===================================================================================================
-
-                        //   std::ofstream outFile(outputFile);
-                        //   if (!outFile.is_open())
-                        //   {
-                        //         std::cerr << "Erro ao abrir o arquivo de saída.\n";
-                        //         return 1;
-                        //   }
-                        //   descompile($$, outFile);
-                        //   outFile.close(); 
-                        }
-#line 1374 "parser.tab.cpp"
+                        { (yyval.ast) = (yyvsp[0].ast); programAST = (yyval.ast); }
+#line 1317 "parser.tab.cpp"
     break;
 
   case 3: /* ldecl: dec ldecl  */
-#line 160 "parser.ypp"
+#line 102 "parser.ypp"
                         { vector<AST*> children = {(yyvsp[-1].ast),(yyvsp[0].ast)}; (yyval.ast) = new AST(AST_LDECL, children); }
-#line 1380 "parser.tab.cpp"
+#line 1323 "parser.tab.cpp"
     break;
 
   case 4: /* ldecl: %empty  */
-#line 161 "parser.ypp"
+#line 103 "parser.ypp"
                         { (yyval.ast) = nullptr; }
-#line 1386 "parser.tab.cpp"
+#line 1329 "parser.tab.cpp"
     break;
 
   case 5: /* ldecl: error '}'  */
-#line 162 "parser.ypp"
+#line 104 "parser.ypp"
                  { yyerror("Declaração inválida. Recuperado até }"); yyerrok; yyclearin; (yyval.ast) = nullptr; }
-#line 1392 "parser.tab.cpp"
+#line 1335 "parser.tab.cpp"
     break;
 
   case 6: /* ldecl: error ')'  */
-#line 163 "parser.ypp"
+#line 105 "parser.ypp"
                  { yyerror("Declaração inválida. Recuperado até )"); yyerrok; yyclearin; (yyval.ast) = nullptr; }
-#line 1398 "parser.tab.cpp"
+#line 1341 "parser.tab.cpp"
     break;
 
   case 7: /* ldecl: error ';'  */
-#line 164 "parser.ypp"
+#line 106 "parser.ypp"
                  { yyerror("Declaração inválida. Recuperado até ;"); yyerrok; yyclearin; (yyval.ast) = nullptr; }
-#line 1404 "parser.tab.cpp"
+#line 1347 "parser.tab.cpp"
     break;
 
   case 8: /* dec: vardec  */
-#line 167 "parser.ypp"
+#line 109 "parser.ypp"
                         { (yyval.ast) = (yyvsp[0].ast); }
-#line 1410 "parser.tab.cpp"
+#line 1353 "parser.tab.cpp"
     break;
 
   case 9: /* dec: vetdec  */
-#line 168 "parser.ypp"
+#line 110 "parser.ypp"
                         { (yyval.ast) = (yyvsp[0].ast); }
-#line 1416 "parser.tab.cpp"
+#line 1359 "parser.tab.cpp"
     break;
 
   case 10: /* dec: fundec  */
-#line 169 "parser.ypp"
+#line 111 "parser.ypp"
                         { (yyval.ast) = (yyvsp[0].ast); }
-#line 1422 "parser.tab.cpp"
+#line 1365 "parser.tab.cpp"
     break;
 
   case 11: /* vardec: KW_INT TK_IDENTIFIER '=' LIT_CHAR ';'  */
-#line 176 "parser.ypp"
+#line 118 "parser.ypp"
                                                 { vector<AST*> children = {new AST(AST_SYMBOL, {}, (yyvsp[-1].symbol))}; (yyval.ast) = new AST(AST_INT_VARDEC, children, (yyvsp[-3].symbol));}
-#line 1428 "parser.tab.cpp"
+#line 1371 "parser.tab.cpp"
     break;
 
   case 12: /* vardec: KW_INT TK_IDENTIFIER '=' LIT_INT ';'  */
-#line 177 "parser.ypp"
+#line 119 "parser.ypp"
                                                 { vector<AST*> children = {new AST(AST_SYMBOL, {}, (yyvsp[-1].symbol))}; (yyval.ast) = new AST(AST_INT_VARDEC, children, (yyvsp[-3].symbol));}
-#line 1434 "parser.tab.cpp"
+#line 1377 "parser.tab.cpp"
     break;
 
   case 13: /* vardec: KW_INT TK_IDENTIFIER '=' LIT_REAL ';'  */
-#line 178 "parser.ypp"
+#line 120 "parser.ypp"
                                                 { vector<AST*> children = {new AST(AST_SYMBOL, {}, (yyvsp[-1].symbol))}; (yyval.ast) = new AST(AST_INT_VARDEC, children, (yyvsp[-3].symbol));}
-#line 1440 "parser.tab.cpp"
+#line 1383 "parser.tab.cpp"
     break;
 
   case 14: /* vardec: KW_BYTE TK_IDENTIFIER '=' LIT_CHAR ';'  */
-#line 179 "parser.ypp"
+#line 121 "parser.ypp"
                                                 { vector<AST*> children = {new AST(AST_SYMBOL, {}, (yyvsp[-1].symbol))}; (yyval.ast) = new AST(AST_BYTE_VARDEC, children, (yyvsp[-3].symbol));}
-#line 1446 "parser.tab.cpp"
+#line 1389 "parser.tab.cpp"
     break;
 
   case 15: /* vardec: KW_BYTE TK_IDENTIFIER '=' LIT_INT ';'  */
-#line 180 "parser.ypp"
+#line 122 "parser.ypp"
                                                 { vector<AST*> children = {new AST(AST_SYMBOL, {}, (yyvsp[-1].symbol))}; (yyval.ast) = new AST(AST_BYTE_VARDEC, children, (yyvsp[-3].symbol));}
-#line 1452 "parser.tab.cpp"
+#line 1395 "parser.tab.cpp"
     break;
 
   case 16: /* vardec: KW_BYTE TK_IDENTIFIER '=' LIT_REAL ';'  */
-#line 181 "parser.ypp"
+#line 123 "parser.ypp"
                                                 { vector<AST*> children = {new AST(AST_SYMBOL, {}, (yyvsp[-1].symbol))}; (yyval.ast) = new AST(AST_BYTE_VARDEC, children, (yyvsp[-3].symbol));}
-#line 1458 "parser.tab.cpp"
+#line 1401 "parser.tab.cpp"
     break;
 
   case 17: /* vardec: KW_REAL TK_IDENTIFIER '=' LIT_INT ';'  */
-#line 182 "parser.ypp"
+#line 124 "parser.ypp"
                                                 { vector<AST*> children = {new AST(AST_SYMBOL, {}, (yyvsp[-1].symbol))}; (yyval.ast) = new AST(AST_REAL_VARDEC, children, (yyvsp[-3].symbol));}
-#line 1464 "parser.tab.cpp"
+#line 1407 "parser.tab.cpp"
     break;
 
   case 18: /* vardec: KW_REAL TK_IDENTIFIER '=' LIT_CHAR ';'  */
-#line 183 "parser.ypp"
+#line 125 "parser.ypp"
                                                 { vector<AST*> children = {new AST(AST_SYMBOL, {}, (yyvsp[-1].symbol))}; (yyval.ast) = new AST(AST_REAL_VARDEC, children, (yyvsp[-3].symbol));}
-#line 1470 "parser.tab.cpp"
+#line 1413 "parser.tab.cpp"
     break;
 
   case 19: /* vardec: KW_REAL TK_IDENTIFIER '=' LIT_REAL ';'  */
-#line 184 "parser.ypp"
+#line 126 "parser.ypp"
                                                 { vector<AST*> children = {new AST(AST_SYMBOL, {}, (yyvsp[-1].symbol))}; (yyval.ast) = new AST(AST_REAL_VARDEC, children, (yyvsp[-3].symbol));}
-#line 1476 "parser.tab.cpp"
+#line 1419 "parser.tab.cpp"
     break;
 
   case 20: /* expr_vet_elem_list: expr_vet_elem  */
-#line 191 "parser.ypp"
+#line 133 "parser.ypp"
                                                                 { (yyval.ast) = (yyvsp[0].ast); }
-#line 1482 "parser.tab.cpp"
+#line 1425 "parser.tab.cpp"
     break;
 
   case 21: /* expr_vet_elem_list: expr_vet_elem ',' expr_vet_elem_list  */
-#line 192 "parser.ypp"
+#line 134 "parser.ypp"
                                                                 { vector<AST*> children = {(yyvsp[-2].ast), (yyvsp[0].ast)}; (yyval.ast) = new AST(AST_EXPR_VET_ELEM, children); }
-#line 1488 "parser.tab.cpp"
+#line 1431 "parser.tab.cpp"
     break;
 
   case 22: /* expr_vet_elem: LIT_CHAR  */
-#line 195 "parser.ypp"
+#line 137 "parser.ypp"
                                                                 { vector<AST*> children; (yyval.ast) = new AST(AST_SYMBOL, children, (yyvsp[0].symbol)); }
-#line 1494 "parser.tab.cpp"
+#line 1437 "parser.tab.cpp"
     break;
 
   case 23: /* expr_vet_elem: LIT_INT  */
-#line 196 "parser.ypp"
+#line 138 "parser.ypp"
                                                                 { vector<AST*> children; (yyval.ast) = new AST(AST_SYMBOL, children, (yyvsp[0].symbol)); }
-#line 1500 "parser.tab.cpp"
+#line 1443 "parser.tab.cpp"
     break;
 
   case 24: /* expr_vet_real_list: LIT_REAL  */
-#line 198 "parser.ypp"
+#line 140 "parser.ypp"
                                                                 { vector<AST*> children; (yyval.ast) = new AST(AST_SYMBOL, children, (yyvsp[0].symbol)); }
-#line 1506 "parser.tab.cpp"
+#line 1449 "parser.tab.cpp"
     break;
 
   case 25: /* expr_vet_real_list: LIT_REAL ',' expr_vet_real_list  */
-#line 199 "parser.ypp"
+#line 141 "parser.ypp"
                                                                 { vector<AST*> children = {(yyvsp[0].ast)}; (yyval.ast) = new AST(AST_SYMBOL, children, (yyvsp[-2].symbol)); }
-#line 1512 "parser.tab.cpp"
+#line 1455 "parser.tab.cpp"
     break;
 
   case 26: /* vetdec: KW_INT TK_IDENTIFIER '[' expr ']' '=' expr_vet_elem_list ';'  */
-#line 202 "parser.ypp"
+#line 144 "parser.ypp"
                                                                         { vector<AST*> children = {(yyvsp[-4].ast), (yyvsp[-1].ast)}; (yyval.ast) = new AST(AST_INT_VETDEC, children, (yyvsp[-6].symbol));}
-#line 1518 "parser.tab.cpp"
+#line 1461 "parser.tab.cpp"
     break;
 
   case 27: /* vetdec: KW_INT TK_IDENTIFIER '[' expr ']' ';'  */
-#line 203 "parser.ypp"
+#line 145 "parser.ypp"
                                                                         { vector<AST*> children = {(yyvsp[-2].ast)}; (yyval.ast) = new AST(AST_INT_VETDEC_VAZIO, children, (yyvsp[-4].symbol));}
-#line 1524 "parser.tab.cpp"
+#line 1467 "parser.tab.cpp"
     break;
 
   case 28: /* vetdec: KW_BYTE TK_IDENTIFIER '[' expr ']' '=' expr_vet_elem_list ';'  */
-#line 204 "parser.ypp"
+#line 146 "parser.ypp"
                                                                         { vector<AST*> children = {(yyvsp[-4].ast), (yyvsp[-1].ast)}; (yyval.ast) = new AST(AST_BYTE_VETDEC, children, (yyvsp[-6].symbol));}
-#line 1530 "parser.tab.cpp"
+#line 1473 "parser.tab.cpp"
     break;
 
   case 29: /* vetdec: KW_BYTE TK_IDENTIFIER '[' expr ']' ';'  */
-#line 205 "parser.ypp"
+#line 147 "parser.ypp"
                                                                         { vector<AST*> children = {(yyvsp[-2].ast)}; (yyval.ast) = new AST(AST_BYTE_VETDEC_VAZIO, children, (yyvsp[-4].symbol));}
-#line 1536 "parser.tab.cpp"
+#line 1479 "parser.tab.cpp"
     break;
 
   case 30: /* vetdec: KW_REAL TK_IDENTIFIER '[' expr ']' '=' expr_vet_real_list ';'  */
-#line 206 "parser.ypp"
+#line 148 "parser.ypp"
                                                                         { vector<AST*> children = {(yyvsp[-4].ast), (yyvsp[-1].ast)}; (yyval.ast) = new AST(AST_REAL_VETDEC, children, (yyvsp[-6].symbol));}
-#line 1542 "parser.tab.cpp"
+#line 1485 "parser.tab.cpp"
     break;
 
   case 31: /* vetdec: KW_REAL TK_IDENTIFIER '[' expr ']' ';'  */
-#line 207 "parser.ypp"
+#line 149 "parser.ypp"
                                                                         { vector<AST*> children = {(yyvsp[-2].ast)}; (yyval.ast) = new AST(AST_REAL_VETDEC_VAZIO, children, (yyvsp[-4].symbol));}
-#line 1548 "parser.tab.cpp"
+#line 1491 "parser.tab.cpp"
     break;
 
   case 32: /* parlist: %empty  */
-#line 214 "parser.ypp"
+#line 156 "parser.ypp"
                                         {(yyval.ast) = nullptr;}
-#line 1554 "parser.tab.cpp"
+#line 1497 "parser.tab.cpp"
     break;
 
   case 33: /* parlist: parlist_nvazio  */
-#line 215 "parser.ypp"
+#line 157 "parser.ypp"
                                         {(yyval.ast) = (yyvsp[0].ast);}
-#line 1560 "parser.tab.cpp"
+#line 1503 "parser.tab.cpp"
     break;
 
   case 34: /* parlist_nvazio: par_elem  */
-#line 218 "parser.ypp"
+#line 160 "parser.ypp"
                                         {(yyval.ast) = (yyvsp[0].ast);}
-#line 1566 "parser.tab.cpp"
+#line 1509 "parser.tab.cpp"
     break;
 
   case 35: /* parlist_nvazio: par_elem ',' parlist_nvazio  */
-#line 219 "parser.ypp"
+#line 161 "parser.ypp"
                                         {vector<AST*> children = {(yyvsp[-2].ast), (yyvsp[0].ast)}; (yyval.ast) = new AST(AST_PAR_LIST, children);}
-#line 1572 "parser.tab.cpp"
+#line 1515 "parser.tab.cpp"
     break;
 
   case 36: /* par_elem: KW_INT TK_IDENTIFIER  */
-#line 222 "parser.ypp"
+#line 164 "parser.ypp"
                                            {vector<AST*> children; (yyval.ast) = new AST(AST_PAR_INT_SYMBOL, children, (yyvsp[0].symbol)); }
-#line 1578 "parser.tab.cpp"
+#line 1521 "parser.tab.cpp"
     break;
 
   case 37: /* par_elem: KW_BYTE TK_IDENTIFIER  */
-#line 223 "parser.ypp"
+#line 165 "parser.ypp"
                                            {vector<AST*> children; (yyval.ast) = new AST(AST_PAR_BYTE_SYMBOL, children, (yyvsp[0].symbol));}
-#line 1584 "parser.tab.cpp"
+#line 1527 "parser.tab.cpp"
     break;
 
   case 38: /* par_elem: KW_REAL TK_IDENTIFIER  */
-#line 224 "parser.ypp"
+#line 166 "parser.ypp"
                                            {vector<AST*> children; (yyval.ast) = new AST(AST_PAR_REAL_SYMBOL, children, (yyvsp[0].symbol));}
-#line 1590 "parser.tab.cpp"
+#line 1533 "parser.tab.cpp"
     break;
 
   case 39: /* fundec: KW_INT TK_IDENTIFIER '(' parlist ')' cmd_blc  */
-#line 227 "parser.ypp"
+#line 169 "parser.ypp"
                                                     { vector<AST*> children = {(yyvsp[-2].ast),(yyvsp[0].ast)}; (yyval.ast) = new AST(AST_INT_FUNDEC, children, (yyvsp[-4].symbol));}
-#line 1596 "parser.tab.cpp"
+#line 1539 "parser.tab.cpp"
     break;
 
   case 40: /* fundec: KW_BYTE TK_IDENTIFIER '(' parlist ')' cmd_blc  */
-#line 228 "parser.ypp"
+#line 170 "parser.ypp"
                                                     { vector<AST*> children = {(yyvsp[-2].ast),(yyvsp[0].ast)}; (yyval.ast) = new AST(AST_BYTE_FUNDEC, children, (yyvsp[-4].symbol));}
-#line 1602 "parser.tab.cpp"
+#line 1545 "parser.tab.cpp"
     break;
 
   case 41: /* fundec: KW_REAL TK_IDENTIFIER '(' parlist ')' cmd_blc  */
-#line 229 "parser.ypp"
+#line 171 "parser.ypp"
                                                     { vector<AST*> children = {(yyvsp[-2].ast),(yyvsp[0].ast)}; (yyval.ast) = new AST(AST_REAL_FUNDEC, children, (yyvsp[-4].symbol));}
-#line 1608 "parser.tab.cpp"
+#line 1551 "parser.tab.cpp"
     break;
 
   case 42: /* cmd_blc: '{' cmd_lst '}'  */
-#line 232 "parser.ypp"
+#line 174 "parser.ypp"
                        { vector<AST*> children = {(yyvsp[-1].ast)}; (yyval.ast) = new AST(AST_CMD_BLOCK, children); }
-#line 1614 "parser.tab.cpp"
+#line 1557 "parser.tab.cpp"
     break;
 
   case 43: /* cmd_blc: '{' error '}'  */
-#line 233 "parser.ypp"
+#line 175 "parser.ypp"
                        { yyerror("Bloco de comandos inválido. Recuperado até a chave de fechamento."); yyerrok; yyclearin; (yyval.ast) = nullptr; }
-#line 1620 "parser.tab.cpp"
+#line 1563 "parser.tab.cpp"
     break;
 
   case 44: /* cmd_lst: %empty  */
-#line 236 "parser.ypp"
+#line 178 "parser.ypp"
          { (yyval.ast) = nullptr; }
-#line 1626 "parser.tab.cpp"
+#line 1569 "parser.tab.cpp"
     break;
 
   case 45: /* cmd_lst: cmd cmd_lst  */
-#line 237 "parser.ypp"
+#line 179 "parser.ypp"
                         { vector<AST*> children = {(yyvsp[-1].ast), (yyvsp[0].ast)}; (yyval.ast) = new AST(AST_CMD_LIST, children); }
-#line 1632 "parser.tab.cpp"
+#line 1575 "parser.tab.cpp"
     break;
 
   case 46: /* print_lst: print_elem  */
-#line 244 "parser.ypp"
+#line 186 "parser.ypp"
                                          { vector<AST*> children = {(yyvsp[0].ast), nullptr}; (yyval.ast) = new AST(AST_PRINT_LIST, children); }
-#line 1638 "parser.tab.cpp"
+#line 1581 "parser.tab.cpp"
     break;
 
   case 47: /* print_lst: print_elem print_lst  */
-#line 245 "parser.ypp"
+#line 187 "parser.ypp"
                                          { vector<AST*> children = {(yyvsp[-1].ast), (yyvsp[0].ast)}; (yyval.ast) = new AST(AST_PRINT_LIST, children); }
-#line 1644 "parser.tab.cpp"
+#line 1587 "parser.tab.cpp"
     break;
 
   case 48: /* print_elem: LIT_STRING  */
-#line 248 "parser.ypp"
+#line 190 "parser.ypp"
                                  { (yyval.ast) = new AST(AST_SYMBOL, {}, (yyvsp[0].symbol)); }
-#line 1650 "parser.tab.cpp"
+#line 1593 "parser.tab.cpp"
     break;
 
   case 49: /* print_elem: expr  */
-#line 249 "parser.ypp"
+#line 191 "parser.ypp"
                                  { (yyval.ast) = (yyvsp[0].ast); }
-#line 1656 "parser.tab.cpp"
+#line 1599 "parser.tab.cpp"
     break;
 
   case 50: /* cmd: TK_IDENTIFIER '=' expr ';'  */
-#line 256 "parser.ypp"
+#line 198 "parser.ypp"
                                                 { vector<AST*> children = {(yyvsp[-1].ast)}; (yyval.ast) = new AST(AST_ASSIGNMENT, children, (yyvsp[-3].symbol));}
-#line 1662 "parser.tab.cpp"
+#line 1605 "parser.tab.cpp"
     break;
 
   case 51: /* cmd: TK_IDENTIFIER '[' expr ']' '=' expr ';'  */
-#line 257 "parser.ypp"
+#line 199 "parser.ypp"
                                                 { vector<AST*> children = {(yyvsp[-4].ast), (yyvsp[-1].ast)}; (yyval.ast) = new AST(AST_VET_ASSIGNMENT, children, (yyvsp[-6].symbol));}
-#line 1668 "parser.tab.cpp"
+#line 1611 "parser.tab.cpp"
     break;
 
   case 52: /* cmd: KW_PRINT print_lst ';'  */
-#line 258 "parser.ypp"
+#line 200 "parser.ypp"
                                                 { vector<AST*> children = {(yyvsp[-1].ast)}; (yyval.ast) = new AST(AST_PRINT, children);}
-#line 1674 "parser.tab.cpp"
+#line 1617 "parser.tab.cpp"
     break;
 
   case 53: /* cmd: KW_RETURN expr ';'  */
-#line 259 "parser.ypp"
+#line 201 "parser.ypp"
                                                 { vector<AST*> children = {(yyvsp[-1].ast)}; (yyval.ast) = new AST(AST_RETURN, children);}
-#line 1680 "parser.tab.cpp"
+#line 1623 "parser.tab.cpp"
     break;
 
   case 54: /* cmd: KW_READ TK_IDENTIFIER ';'  */
-#line 260 "parser.ypp"
+#line 202 "parser.ypp"
                                                 { vector<AST*> children; (yyval.ast) = new AST(AST_READ, children, (yyvsp[-1].symbol));}
-#line 1686 "parser.tab.cpp"
+#line 1629 "parser.tab.cpp"
     break;
 
   case 55: /* cmd: KW_IF '(' expr ')' cmd  */
-#line 261 "parser.ypp"
+#line 203 "parser.ypp"
                                                 { vector<AST*> children = {(yyvsp[-2].ast), (yyvsp[0].ast)}; (yyval.ast) = new AST(AST_IF_THEN, children);}
-#line 1692 "parser.tab.cpp"
+#line 1635 "parser.tab.cpp"
     break;
 
   case 56: /* cmd: KW_IF '(' expr ')' cmd KW_ELSE cmd  */
-#line 262 "parser.ypp"
+#line 204 "parser.ypp"
                                                 { vector<AST*> children = {(yyvsp[-4].ast), (yyvsp[-2].ast), (yyvsp[0].ast)}; (yyval.ast) = new AST(AST_IF_THEN_ELSE, children);}
-#line 1698 "parser.tab.cpp"
+#line 1641 "parser.tab.cpp"
     break;
 
   case 57: /* cmd: KW_WHILE expr KW_DO cmd  */
-#line 263 "parser.ypp"
+#line 205 "parser.ypp"
                                                 { vector<AST*> children = {(yyvsp[-2].ast), (yyvsp[0].ast)}; (yyval.ast) = new AST(AST_WHILE, children);}
-#line 1704 "parser.tab.cpp"
+#line 1647 "parser.tab.cpp"
     break;
 
   case 58: /* cmd: KW_DO cmd KW_WHILE expr ';'  */
-#line 264 "parser.ypp"
+#line 206 "parser.ypp"
                                                 { vector<AST*> children = {(yyvsp[-3].ast), (yyvsp[-1].ast)}; (yyval.ast) = new AST(AST_DO_WHILE, children);}
-#line 1710 "parser.tab.cpp"
+#line 1653 "parser.tab.cpp"
     break;
 
   case 59: /* cmd: cmd_blc  */
-#line 265 "parser.ypp"
+#line 207 "parser.ypp"
                                                 { (yyval.ast) = (yyvsp[0].ast); }
-#line 1716 "parser.tab.cpp"
+#line 1659 "parser.tab.cpp"
     break;
 
   case 60: /* cmd: ';'  */
-#line 266 "parser.ypp"
+#line 208 "parser.ypp"
                                                 { (yyval.ast) = nullptr; }
-#line 1722 "parser.tab.cpp"
+#line 1665 "parser.tab.cpp"
     break;
 
   case 61: /* cmd: error ';'  */
-#line 267 "parser.ypp"
+#line 209 "parser.ypp"
                                           { yyerror("Comando inválido. Recuperado até ;"); yyerrok; yyclearin; (yyval.ast) = nullptr; }
-#line 1728 "parser.tab.cpp"
+#line 1671 "parser.tab.cpp"
     break;
 
   case 62: /* par: par_nvazio  */
-#line 272 "parser.ypp"
+#line 214 "parser.ypp"
                                   { (yyval.ast) = (yyvsp[0].ast); }
-#line 1734 "parser.tab.cpp"
+#line 1677 "parser.tab.cpp"
     break;
 
   case 63: /* par: %empty  */
-#line 273 "parser.ypp"
+#line 215 "parser.ypp"
                                   { (yyval.ast) = nullptr; }
-#line 1740 "parser.tab.cpp"
+#line 1683 "parser.tab.cpp"
     break;
 
   case 64: /* par_nvazio: expr  */
-#line 276 "parser.ypp"
+#line 218 "parser.ypp"
                                   { vector<AST*> children = {(yyvsp[0].ast), nullptr}; (yyval.ast) = new AST(AST_EXP_LIST, children); }
-#line 1746 "parser.tab.cpp"
+#line 1689 "parser.tab.cpp"
     break;
 
   case 65: /* par_nvazio: expr ',' par_nvazio  */
-#line 277 "parser.ypp"
+#line 219 "parser.ypp"
                                   { vector<AST*> children = {(yyvsp[-2].ast), (yyvsp[0].ast)}; (yyval.ast) = new AST(AST_EXP_LIST, children); }
-#line 1752 "parser.tab.cpp"
+#line 1695 "parser.tab.cpp"
     break;
 
   case 66: /* func: TK_IDENTIFIER '(' par ')'  */
-#line 282 "parser.ypp"
+#line 224 "parser.ypp"
                                   { vector<AST*> children = {(yyvsp[-1].ast)}; (yyval.ast) = new AST(AST_SYMBOL_FUNC, children, (yyvsp[-3].symbol)); }
-#line 1758 "parser.tab.cpp"
+#line 1701 "parser.tab.cpp"
     break;
 
   case 67: /* expr: func  */
-#line 284 "parser.ypp"
+#line 226 "parser.ypp"
                                 { (yyval.ast) = (yyvsp[0].ast); }
-#line 1764 "parser.tab.cpp"
+#line 1707 "parser.tab.cpp"
     break;
 
   case 68: /* expr: TK_IDENTIFIER '[' expr ']'  */
-#line 285 "parser.ypp"
+#line 227 "parser.ypp"
                                 { vector<AST*> children = {(yyvsp[-1].ast)}; (yyval.ast) = new AST(AST_SYMBOL_VEC, children, (yyvsp[-3].symbol)); }
-#line 1770 "parser.tab.cpp"
+#line 1713 "parser.tab.cpp"
     break;
 
   case 69: /* expr: TK_IDENTIFIER  */
-#line 286 "parser.ypp"
+#line 228 "parser.ypp"
                                 { vector<AST*> children; (yyval.ast) = new AST(AST_SYMBOL, children, (yyvsp[0].symbol)); }
-#line 1776 "parser.tab.cpp"
+#line 1719 "parser.tab.cpp"
     break;
 
   case 70: /* expr: LIT_INT  */
-#line 287 "parser.ypp"
+#line 229 "parser.ypp"
                                 { vector<AST*> children; (yyval.ast) = new AST(AST_SYMBOL, children, (yyvsp[0].symbol)); }
-#line 1782 "parser.tab.cpp"
+#line 1725 "parser.tab.cpp"
     break;
 
   case 71: /* expr: LIT_CHAR  */
-#line 288 "parser.ypp"
+#line 230 "parser.ypp"
                                 { vector<AST*> children; (yyval.ast) = new AST(AST_SYMBOL, children, (yyvsp[0].symbol)); }
-#line 1788 "parser.tab.cpp"
+#line 1731 "parser.tab.cpp"
     break;
 
   case 72: /* expr: LIT_REAL  */
-#line 289 "parser.ypp"
+#line 231 "parser.ypp"
                                 { vector<AST*> children; (yyval.ast) = new AST(AST_SYMBOL, children, (yyvsp[0].symbol)); }
-#line 1794 "parser.tab.cpp"
+#line 1737 "parser.tab.cpp"
     break;
 
   case 73: /* expr: expr '+' expr  */
-#line 291 "parser.ypp"
+#line 233 "parser.ypp"
                                 { vector<AST*> children = {(yyvsp[-2].ast), (yyvsp[0].ast)}; (yyval.ast) = new AST(AST_ADD, children); }
-#line 1800 "parser.tab.cpp"
+#line 1743 "parser.tab.cpp"
     break;
 
   case 74: /* expr: expr '-' expr  */
-#line 292 "parser.ypp"
+#line 234 "parser.ypp"
                                 { vector<AST*> children = {(yyvsp[-2].ast), (yyvsp[0].ast)}; (yyval.ast) = new AST(AST_SUB, children); }
-#line 1806 "parser.tab.cpp"
+#line 1749 "parser.tab.cpp"
     break;
 
   case 75: /* expr: expr '*' expr  */
-#line 293 "parser.ypp"
+#line 235 "parser.ypp"
                                 { vector<AST*> children = {(yyvsp[-2].ast), (yyvsp[0].ast)}; (yyval.ast) = new AST(AST_MUL, children); }
-#line 1812 "parser.tab.cpp"
+#line 1755 "parser.tab.cpp"
     break;
 
   case 76: /* expr: expr '/' expr  */
-#line 294 "parser.ypp"
+#line 236 "parser.ypp"
                                 { vector<AST*> children = {(yyvsp[-2].ast), (yyvsp[0].ast)}; (yyval.ast) = new AST(AST_DIV, children); }
-#line 1818 "parser.tab.cpp"
+#line 1761 "parser.tab.cpp"
     break;
 
   case 77: /* expr: expr '&' expr  */
-#line 295 "parser.ypp"
+#line 237 "parser.ypp"
                                 { vector<AST*> children = {(yyvsp[-2].ast), (yyvsp[0].ast)}; (yyval.ast) = new AST(AST_AND, children); }
-#line 1824 "parser.tab.cpp"
+#line 1767 "parser.tab.cpp"
     break;
 
   case 78: /* expr: expr '|' expr  */
-#line 296 "parser.ypp"
+#line 238 "parser.ypp"
                                 { vector<AST*> children = {(yyvsp[-2].ast), (yyvsp[0].ast)}; (yyval.ast) = new AST(AST_OR, children); }
-#line 1830 "parser.tab.cpp"
+#line 1773 "parser.tab.cpp"
     break;
 
   case 79: /* expr: expr '<' expr  */
-#line 297 "parser.ypp"
+#line 239 "parser.ypp"
                                 { vector<AST*> children = {(yyvsp[-2].ast), (yyvsp[0].ast)}; (yyval.ast) = new AST(AST_LESS, children); }
-#line 1836 "parser.tab.cpp"
+#line 1779 "parser.tab.cpp"
     break;
 
   case 80: /* expr: expr '>' expr  */
-#line 298 "parser.ypp"
+#line 240 "parser.ypp"
                                 { vector<AST*> children = {(yyvsp[-2].ast), (yyvsp[0].ast)}; (yyval.ast) = new AST(AST_GRT, children); }
-#line 1842 "parser.tab.cpp"
+#line 1785 "parser.tab.cpp"
     break;
 
   case 81: /* expr: '~' expr  */
-#line 299 "parser.ypp"
+#line 241 "parser.ypp"
                                 { vector<AST*> children = {(yyvsp[0].ast)}; (yyval.ast) = new AST(AST_NOT, children); }
-#line 1848 "parser.tab.cpp"
+#line 1791 "parser.tab.cpp"
     break;
 
   case 82: /* expr: expr OPERATOR_EQ expr  */
-#line 300 "parser.ypp"
+#line 242 "parser.ypp"
                                 { vector<AST*> children = {(yyvsp[-2].ast), (yyvsp[0].ast)}; (yyval.ast) = new AST(AST_EQUAL, children); }
-#line 1854 "parser.tab.cpp"
+#line 1797 "parser.tab.cpp"
     break;
 
   case 83: /* expr: expr OPERATOR_DIF expr  */
-#line 301 "parser.ypp"
+#line 243 "parser.ypp"
                                 { vector<AST*> children = {(yyvsp[-2].ast), (yyvsp[0].ast)}; (yyval.ast) = new AST(AST_DIF, children); }
-#line 1860 "parser.tab.cpp"
+#line 1803 "parser.tab.cpp"
     break;
 
   case 84: /* expr: expr OPERATOR_GE expr  */
-#line 302 "parser.ypp"
+#line 244 "parser.ypp"
                                 { vector<AST*> children = {(yyvsp[-2].ast), (yyvsp[0].ast)}; (yyval.ast) = new AST(AST_GE, children); }
-#line 1866 "parser.tab.cpp"
+#line 1809 "parser.tab.cpp"
     break;
 
   case 85: /* expr: expr OPERATOR_LE expr  */
-#line 303 "parser.ypp"
+#line 245 "parser.ypp"
                                 { vector<AST*> children = {(yyvsp[-2].ast), (yyvsp[0].ast)}; (yyval.ast) = new AST(AST_LE, children); }
-#line 1872 "parser.tab.cpp"
+#line 1815 "parser.tab.cpp"
     break;
 
   case 86: /* expr: '(' expr ')'  */
-#line 304 "parser.ypp"
+#line 246 "parser.ypp"
                                 { (yyval.ast) = (yyvsp[-1].ast); }
-#line 1878 "parser.tab.cpp"
+#line 1821 "parser.tab.cpp"
     break;
 
 
-#line 1882 "parser.tab.cpp"
+#line 1825 "parser.tab.cpp"
 
       default: break;
     }
@@ -2071,7 +2014,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 307 "parser.ypp"
+#line 249 "parser.ypp"
 
 
 void yyerror(string msg)

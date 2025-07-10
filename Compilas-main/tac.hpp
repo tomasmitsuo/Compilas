@@ -36,14 +36,24 @@ struct TAC
             type(t), res(r), op1(o1), op2(o2) {prev=next=0;};
 };
 
+// FUNÇÕES DE PRINT
 void tacPrintSingle(TAC* tac);
 void tacPrintBackwards(TAC* tac);
 
+// FUNÇÕES AUXILIARES
 TAC* tacReverse(TAC* tac);
-
 TAC* tacJoin(TAC* l1, TAC* l2);
 
+// GERACAO DE CODIGO INTERMEDIARIO
 TAC* generateCode(AST* node);
 
+// GERAÇÃO DE CÓDIGO ASSEMBLY
 void generateAsm(TAC* first);
+
+// OTIMIZAÇÃO
+
+TAC* optimizeTAC(TAC* code);
+
+
+
 #endif

@@ -2,9 +2,11 @@
 
 # include <stdio.h>
 # include <stdlib.h>
-#include <string>
-#include <iostream>
-#include <fstream>
+# include <string>
+# include <cstring>
+# include <iostream>
+# include <fstream>
+# include <chrono>
 
 # include "tac.hpp"
 # include "ast.hpp"
@@ -19,22 +21,36 @@ extern bool hasSyntaxError;
 extern int syntaxErrorCount;
 extern AST* programAST;
 
+
+bool optimize = false;
+
+
 char* outputFile = NULL;
 
-int yylex();
-int yyparse();
+// funções do yacc
+int yylex(); // analise lexica
+int yyparse(); // analise sintatica + analise semantica
+
+// funções auxiliares para capturar infos
 int isRunning();
 int getLineNumber();
+
+// funções de print das estruturas de dados
 void symbolPrintTable();
 void astPrint(AST* ast, int level);
+void tacPrintBackwards(TAC* tac);
 
 int main(int argc, char** argv)
 {
-
-    // TODO: IMPLEMENTAR A ETAPA 7
-
-    // i) RECUPERAÇÃO DE ERROS
     // ii) OTIMIZAÇÃO DE CÓDIGO
+
+    // TODO: CRIAR FLAG DE OTIMIZAÇÃO
+
+    if (argc > 3 && strcmp(argv[3], "-O") == 0) 
+    {
+        optimize = true;
+        fprintf(stderr, "flag: OTIMIZAÇÃO ATIVADA\n\n");
+    }
     
     if(argc < 3)
     {
@@ -51,6 +67,7 @@ int main(int argc, char** argv)
     int parseResult = yyparse();
 
 
+    // CASO ELE FAÇA PARSER CORRETAMENTE
     if (parseResult == 0) 
     {
         // Agora você tem acesso à AST
@@ -85,8 +102,24 @@ int main(int argc, char** argv)
             
             // Geração de código
             TAC* code = generateCode(programAST);
-            //tacPrintBackwards(code);
+
             code = tacReverse(code);
+
+            if(optimize == true)
+            {
+                code = optimizeTAC(code);
+            }
+            
+            printf("\n\n\nTAC\n\n\n");
+            TAC* tac = code;
+            int i = 0;
+            for(;tac;tac = tac->next)
+            {
+                tacPrintSingle(tac);
+                i++;
+            }
+            printf("\nNumero de estados da TAC: %d\n", i);
+
             generateAsm(code);
             
             // Saída para arquivo
