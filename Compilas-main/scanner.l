@@ -51,8 +51,8 @@
 [ \t] 
 \n {lineNumber++;}
 
-\r\n    { /* Ignora CR+LF como quebra de linha */ }
-\r      { /* Ignora CR sozinho */ }
+\r\n    {lineNumber++;}
+\r      {lineNumber++;}
 
 "//".*
 

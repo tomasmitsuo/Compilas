@@ -711,7 +711,7 @@ void resolvePrint(FILE* fout,SYMBOL* res, string varName, TAC* currentTac)
                 break;
             }
             default:
-                fprintf(stderr, "Erro: tipo desconhecido para print.\n");
+                //fprintf(stderr, "Erro: tipo desconhecido para print.\n");
                 break;
         }
     }      

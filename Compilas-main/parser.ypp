@@ -3,8 +3,10 @@
     struct AST;
 }
 
+
 %{ // ALUNO: TOMÁS MITSUO DIAS UEDA - 00344595
 #include <stdio.h>
+#include <cstring>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -19,11 +21,14 @@ using namespace std;
 extern int lineNumber;
 extern const char* outputFile;
 
+bool hasSyntaxError = false;
+int syntaxErrorCount = 0;
+AST* programAST = nullptr;
+
 int yylex();
 void yyerror(string msg);
 int getLineNumber();
 
-bool hasSyntaxError = false;
 %}
 
 %union {
@@ -91,67 +96,14 @@ bool hasSyntaxError = false;
 %nonassoc '<' '>' OPERATOR_LE OPERATOR_GE OPERATOR_EQ OPERATOR_DIF
 
 %%
-program: ldecl          { $$ = $1;
-                          TAC* code;
+program: ldecl          { $$ = $1; programAST = $$; };
 
-                          // IMPRESSÃO DA AST
-                          
-                          //astPrint($$,0); printf("\n");
-                          
-                          // ===================================================================================================
-                          // ANÁLISE SEMÂNTICA
 
-                          // DECLARACOES
-                          checkAndSetDeclarations($$);
-                          checkUndeclared();
-                          
-                          //ATRIBUICOES E OPERACOES
-                          checkOperands($$);
-                          checkAssignments($$);
-                          
-                          // VARIAVEIS
-                          checkVariables($$);
-
-                          // VETORES
-                          checkVectors($$);
-                        
-                          // FUNÇÕES
-                          checkNumParFunc($$);
-                          checkTypeParFunc($$);
-                          checkReturn($$);
-                          // ===================================================================================================
-                          // RECUPERAÇÃO DE ERROS
-
-                          if (hasSyntaxError) 
-                          {
-                                fprintf(stderr, "\nATENÇÃO: Erros de sintaxe encontrados. Etapas de geração de código foram abortadas.\n");
-                                return 3;
-                          }
-
-                          // ===================================================================================================
-                          // CONSTRUÇÃO E PRINT DAS TACS
-
-                          code = generateCode($$);
-                          tacPrintBackwards(code);
-
-                          code = tacReverse(code);
-                          generateAsm(code);
-                          // ===================================================================================================
-
-                          std::ofstream outFile(outputFile);
-                          if (!outFile.is_open())
-                          {
-                                std::cerr << "Erro ao abrir o arquivo de saída.\n";
-                                return 1;
-                          }
-                          descompile($$, outFile);
-                          outFile.close(); 
-                        }
-    ;
-
-ldecl: error ';' ldecl { yyerror("Declaração inválida. Recuperado até o ponto e vírgula."); $$ = $3; }
-     |dec ldecl        { vector<AST*> children = {$1,$2}; $$ = new AST(AST_LDECL, children); }
+ldecl: dec ldecl        { vector<AST*> children = {$1,$2}; $$ = new AST(AST_LDECL, children); }
      |                  { $$ = nullptr; }
+     | error '}' { yyerror("Declaração inválida. Recuperado até }"); yyerrok; yyclearin; $$ = nullptr; }
+     | error ')' { yyerror("Declaração inválida. Recuperado até )"); yyerrok; yyclearin; $$ = nullptr; }
+     | error ';' { yyerror("Declaração inválida. Recuperado até ;"); yyerrok; yyclearin; $$ = nullptr; }
      ;
 
 dec: vardec             { $$ = $1; }
@@ -220,7 +172,7 @@ fundec: KW_INT TK_IDENTIFIER '('parlist')' cmd_blc  { vector<AST*> children = {$
       ;
 
 cmd_blc: '{'cmd_lst'}' { vector<AST*> children = {$2}; $$ = new AST(AST_CMD_BLOCK, children); }
-       | '{' error '}' { yyerror("Bloco de comandos inválido. Recuperado até a chave de fechamento."); $$ = nullptr; }
+       | '{' error '}' { yyerror("Bloco de comandos inválido. Recuperado até a chave de fechamento."); yyerrok; yyclearin; $$ = nullptr; }
        ;
 
 cmd_lst: { $$ = nullptr; }
@@ -254,7 +206,7 @@ cmd: TK_IDENTIFIER '=' expr ';'                 { vector<AST*> children = {$3}; 
     |KW_DO cmd KW_WHILE expr ';'                { vector<AST*> children = {$2, $4}; $$ = new AST(AST_DO_WHILE, children);}
     |cmd_blc                                    { $$ = $1; }
     | ';'                                       { $$ = nullptr; }
-    | error ';'                           { yyerror("Comando inválido. Recuperado até o ponto e vírgula."); $$ = nullptr; }
+    | error ';'                           { yyerror("Comando inválido. Recuperado até ;"); yyerrok; yyclearin; $$ = nullptr; }
     ;
 
 // =============================================================================================
@@ -298,8 +250,10 @@ expr: func                      { $$ = $1; }
 
 void yyerror(string msg)
 {
-    fprintf(stderr, "ERRO DE SINTAXE. ERRO NA linha %d\n", lineNumber);
-
-    hasSyntaxError = true;
-    //exit(3);
+    //hasSyntaxError = true;
+    if (strcmp(msg.c_str(), "syntax error") != 0)
+    {
+        syntaxErrorCount++;
+    }
+    fprintf(stderr, "ERRO DE SINTAXE NA linha %d - %s\n", getLineNumber(), msg.c_str());
 }

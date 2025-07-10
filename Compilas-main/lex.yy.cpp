@@ -898,12 +898,12 @@ case 23:
 /* rule 23 can match eol */
 YY_RULE_SETUP
 #line 54 "scanner.l"
-{ /* Ignora CR+LF como quebra de linha */ }
+{lineNumber++;}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
 #line 55 "scanner.l"
-{ /* Ignora CR sozinho */ }
+{lineNumber++;}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP

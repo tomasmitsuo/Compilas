@@ -63,7 +63,7 @@ int checkSymbolsUndeclared()
     {
         if (entry.second->type == SYMBOL_ID)
         {
-            fprintf(stderr, "Erro Semantico: %s não declarado\n", entry.second->text.c_str());
+            fprintf(stderr, "\nErro Semantico: %s não declarado\n", entry.second->text.c_str());
             undeclared++;
         } 
     }
